@@ -1,5 +1,6 @@
-import { auth, saveMealPlan, getMealPlans, getProfile } from "./firebase-config.js";
-import { requireAuth, showToast, getDayName, shuffleArray, formatDateShort } from "./utils.js";
+import { auth, db } from "./firebase-config.js";
+import { collection, addDoc, getDocs, query, where, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+import { requireAuth, loadUserProfile, showToast, getDayName, shuffleArray, formatDateShort } from "./utils.js";
 import { FOODS_DATABASE, getCategories, getFoodsByCategory } from "./foods-database.js";
 import { getConditionById, getMealStructure } from "./conditions.js";
 
@@ -13,16 +14,11 @@ let generatedPlan = null;
 export async function initMealPlannerPage() {
   try {
     currentUser = await requireAuth();
-    userProfile = getProfile(currentUser.uid);
+    userProfile = await loadUserProfile(currentUser.uid);
     renderConditionBadge();
     setupPlanToggle();
-
-    if (userProfile.condition === "general") {
-      renderGeneralForm();
-    } else {
-      renderFoodSelector();
-    }
-
+    if (userProfile.condition === "general") renderGeneralForm();
+    else renderFoodSelector();
     document.getElementById("btn-generate")?.addEventListener("click", handleGenerate);
   } catch (e) { /* redirected */ }
 }
@@ -53,7 +49,6 @@ function renderFoodSelector() {
     const tab = document.createElement("button");
     tab.className = "tab" + (cat === activeCategory ? " active" : "");
     tab.textContent = cat;
-    tab.dataset.category = cat;
     tab.addEventListener("click", () => {
       document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
       tab.classList.add("active");
@@ -91,12 +86,7 @@ function renderFoodGrid(category, searchQuery = "") {
   if (!grid) return;
 
   let foods = getFoodsByCategory(category);
-  if (searchQuery) {
-    foods = foods.filter(f =>
-      f.name.toLowerCase().includes(searchQuery) ||
-      f.localName.toLowerCase().includes(searchQuery)
-    );
-  }
+  if (searchQuery) foods = foods.filter(f => f.name.toLowerCase().includes(searchQuery) || f.localName.toLowerCase().includes(searchQuery));
 
   grid.innerHTML = "";
   foods.forEach(food => {
@@ -105,11 +95,7 @@ function renderFoodGrid(category, searchQuery = "") {
     const isSelected = selectedFoodIds.has(food.id);
 
     const card = document.createElement("div");
-    card.className = "food-card" +
-      (isForbidden ? " forbidden" : "") +
-      (isRecommended ? " recommended" : "") +
-      (isSelected ? " selected" : "");
-
+    card.className = "food-card" + (isForbidden ? " forbidden" : "") + (isRecommended ? " recommended" : "") + (isSelected ? " selected" : "");
     card.innerHTML = `
       <div class="food-card-icon">${food.icon || food.name[0]}</div>
       <div class="food-card-info">
@@ -122,21 +108,11 @@ function renderFoodGrid(category, searchQuery = "") {
     `;
 
     if (isForbidden) {
-      card.addEventListener("click", () => {
-        const cond = getConditionById(userProfile.condition);
-        showToast(`Not recommended for ${cond?.shortName || "your condition"}.`, "error");
-      });
+      card.addEventListener("click", () => showToast(`Not recommended for ${getConditionById(userProfile.condition)?.shortName || "your condition"}.`, "error"));
     } else {
       card.addEventListener("click", () => {
-        if (selectedFoodIds.has(food.id)) {
-          selectedFoodIds.delete(food.id);
-          card.classList.remove("selected");
-          card.querySelector(".food-checkbox").checked = false;
-        } else {
-          selectedFoodIds.add(food.id);
-          card.classList.add("selected");
-          card.querySelector(".food-checkbox").checked = true;
-        }
+        if (selectedFoodIds.has(food.id)) { selectedFoodIds.delete(food.id); card.classList.remove("selected"); card.querySelector(".food-checkbox").checked = false; }
+        else { selectedFoodIds.add(food.id); card.classList.add("selected"); card.querySelector(".food-checkbox").checked = true; }
         updateSelectionCounter();
       });
     }
@@ -150,8 +126,7 @@ function renderGeneralForm() {
   container.innerHTML = `
     <div class="general-form">
       <p class="general-intro">You have no specific condition. Answer 3 quick questions and we will generate your balanced meal plan.</p>
-      <div class="form-group">
-        <label>What is your main staple?</label>
+      <div class="form-group"><label>What is your main staple?</label>
         <div class="radio-group">
           <label><input type="radio" name="staple" value="nshima" checked> Nshima</label>
           <label><input type="radio" name="staple" value="rice"> Rice</label>
@@ -159,8 +134,7 @@ function renderGeneralForm() {
           <label><input type="radio" name="staple" value="mixed"> Mixed</label>
         </div>
       </div>
-      <div class="form-group">
-        <label>Your protein preference?</label>
+      <div class="form-group"><label>Your protein preference?</label>
         <div class="radio-group">
           <label><input type="radio" name="protein" value="fish" checked> Fish</label>
           <label><input type="radio" name="protein" value="meat"> Meat</label>
@@ -168,16 +142,14 @@ function renderGeneralForm() {
           <label><input type="radio" name="protein" value="mixed"> Mixed</label>
         </div>
       </div>
-      <div class="form-group">
-        <label>Your vegetable preference?</label>
+      <div class="form-group"><label>Your vegetable preference?</label>
         <div class="radio-group">
           <label><input type="radio" name="veg" value="leafy" checked> Leafy Greens</label>
           <label><input type="radio" name="veg" value="root"> Root Vegetables</label>
           <label><input type="radio" name="veg" value="mixed"> Mixed</label>
         </div>
       </div>
-    </div>
-  `;
+    </div>`;
   const btn = document.getElementById("btn-generate");
   if (btn) btn.disabled = false;
 }
@@ -192,9 +164,7 @@ function updateSelectionCounter() {
 
 async function handleGenerate() {
   const btn = document.getElementById("btn-generate");
-  btn.disabled = true;
-  btn.textContent = "Generating...";
-
+  btn.disabled = true; btn.textContent = "Generating...";
   try {
     if (userProfile.condition === "general") {
       const staple = document.querySelector('input[name="staple"]:checked')?.value || "mixed";
@@ -202,9 +172,8 @@ async function handleGenerate() {
       const veg = document.querySelector('input[name="veg"]:checked')?.value || "mixed";
       selectGeneralFoods(staple, protein, veg);
     }
-
     generatedPlan = generateMealPlan([...selectedFoodIds], userProfile.condition, planDuration);
-    saveMealPlan(currentUser.uid, generatedPlan);
+    await savePlanToFirestore(generatedPlan);
     renderPlanDisplay(generatedPlan);
     document.getElementById("plan-display").scrollIntoView({ behavior: "smooth" });
     showToast("Meal plan generated and saved!");
@@ -212,8 +181,7 @@ async function handleGenerate() {
     showToast("Failed to generate plan. Please try again.", "error");
     console.error(err);
   } finally {
-    btn.disabled = false;
-    btn.textContent = "Generate My Meal Plan";
+    btn.disabled = false; btn.textContent = "Generate My Meal Plan";
     updateSelectionCounter();
   }
 }
@@ -221,166 +189,96 @@ async function handleGenerate() {
 function selectGeneralFoods(staple, protein, veg) {
   selectedFoodIds.clear();
   const find = name => FOODS_DATABASE.find(f => f.name === name);
-
-  const stapleMap = {
-    nshima: ["White Maize Nshima","Yellow Maize Nshima"],
-    rice: ["White Rice","Brown Rice"],
-    cassava: ["Boiled Cassava","Cassava Flour Nshima"],
-    mixed: ["White Maize Nshima","Brown Rice","Boiled Cassava","Rolled Oats","Sorghum Porridge"]
-  };
-  const proteinMap = {
-    fish: ["Fresh Bream/Tilapia","Kapenta Fresh","Tinned Sardines","Tinned Mackerel"],
-    meat: ["Fresh Chicken","Fresh Beef","Goat Meat"],
-    plant: ["Sugar Beans","Soya Pieces","Lentils","Cowpeas"],
-    mixed: ["Fresh Bream/Tilapia","Fresh Chicken","Sugar Beans","Chicken Eggs","Kapenta Fresh"]
-  };
-  const vegMap = {
-    leafy: ["Rape","Green Cabbage","Chibwabwa (Pumpkin Leaves)","Moringa Leaves","Bondwe"],
-    root: ["Carrots","Butternut","Pumpkin","Beetroot"],
-    mixed: ["Rape","Green Cabbage","Tomatoes","Carrots","Moringa Leaves","Bondwe","Chibwabwa (Pumpkin Leaves)"]
-  };
-
-  [...(stapleMap[staple]||stapleMap.mixed), ...(proteinMap[protein]||proteinMap.mixed),
-   ...(vegMap[veg]||vegMap.mixed), "Banana","Guava","Pawpaw","Moringa Tea","Plain Water"
-  ].forEach(name => { const f = find(name); if (f) selectedFoodIds.add(f.id); });
+  const stapleMap = { nshima:["White Maize Nshima","Yellow Maize Nshima"], rice:["White Rice","Brown Rice"], cassava:["Boiled Cassava","Cassava Flour Nshima"], mixed:["White Maize Nshima","Brown Rice","Boiled Cassava","Rolled Oats","Sorghum Porridge"] };
+  const proteinMap = { fish:["Fresh Bream/Tilapia","Kapenta Fresh","Tinned Sardines","Tinned Mackerel"], meat:["Fresh Chicken","Fresh Beef","Goat Meat"], plant:["Sugar Beans","Soya Pieces","Lentils","Cowpeas"], mixed:["Fresh Bream/Tilapia","Fresh Chicken","Sugar Beans","Chicken Eggs","Kapenta Fresh"] };
+  const vegMap = { leafy:["Rape","Green Cabbage","Chibwabwa (Pumpkin Leaves)","Moringa Leaves","Bondwe"], root:["Carrots","Butternut","Pumpkin","Beetroot"], mixed:["Rape","Green Cabbage","Tomatoes","Carrots","Moringa Leaves","Bondwe","Chibwabwa (Pumpkin Leaves)"] };
+  [...(stapleMap[staple]||stapleMap.mixed), ...(proteinMap[protein]||proteinMap.mixed), ...(vegMap[veg]||vegMap.mixed), "Banana","Guava","Pawpaw","Moringa Tea","Plain Water"]
+    .forEach(name => { const f = find(name); if (f) selectedFoodIds.add(f.id); });
 }
 
 export function generateMealPlan(foodIds, conditionId, planDuration) {
   const selectedFoods = FOODS_DATABASE.filter(f => foodIds.includes(f.id));
   const mealStructure = getMealStructure(conditionId);
   const condition = getConditionById(conditionId);
-
   const byMeal = {};
   mealStructure.forEach(slot => { byMeal[slot] = []; });
-
   selectedFoods.forEach(food => {
     food.mealTimes.forEach(time => {
-      if (time === "snack") {
-        if (byMeal["morning_snack"]) byMeal["morning_snack"].push(food);
-        if (byMeal["afternoon_snack"]) byMeal["afternoon_snack"].push(food);
-      } else if (byMeal[time]) {
-        byMeal[time].push(food);
-      }
+      if (time === "snack") { if (byMeal["morning_snack"]) byMeal["morning_snack"].push(food); if (byMeal["afternoon_snack"]) byMeal["afternoon_snack"].push(food); }
+      else if (byMeal[time]) byMeal[time].push(food);
     });
   });
-
   const water = FOODS_DATABASE.find(f => f.name === "Plain Water");
   const days = [];
-  let prevBreakfast = null;
-  let prevProtein = null;
+  let prevBreakfast = null, prevProtein = null;
 
   for (let i = 0; i < planDuration; i++) {
     const dayMeals = {};
-
     mealStructure.forEach(slot => {
       const pool = shuffleArray(byMeal[slot] || []);
-
       if (slot === "breakfast") {
         const options = pool.filter(f => f.id !== prevBreakfast);
         const chosen = options.length ? options : pool;
         const mainItem = chosen[0];
-        dayMeals[slot] = {
-          foods: mainItem ? [mainItem.name, ...chosen.slice(1,3).map(e=>e.name)] : ["Boiled Sweet Potato"],
-          note: getBreakfastNote(conditionId)
-        };
+        dayMeals[slot] = { foods: mainItem ? [mainItem.name, ...chosen.slice(1,3).map(e=>e.name)] : ["Boiled Sweet Potato"], note: getBreakfastNote(conditionId) };
         prevBreakfast = mainItem?.id;
-
       } else if (slot === "lunch" || slot === "supper") {
         const staples = pool.filter(f => f.category === "Staples");
-        const proteins = pool.filter(f =>
-          ["Meat","Fish","Eggs & Legumes"].includes(f.category) && f.id !== prevProtein
-        );
+        const proteins = pool.filter(f => ["Meat","Fish","Eggs & Legumes"].includes(f.category) && f.id !== prevProtein);
         const veggies = shuffleArray(pool.filter(f => ["Leafy Veg","Vegetables"].includes(f.category)));
-
-        const staple = staples[0];
-        const protein = proteins[0] || pool.find(f => f.category === "Eggs & Legumes");
+        const staple = staples[0], protein = proteins[0] || pool.find(f => f.category === "Eggs & Legumes");
         const foods = [];
         if (staple) foods.push(applyPortionNote(staple.name, conditionId));
         if (protein) foods.push(protein.name);
         if (veggies[0]) foods.push(veggies[0].name);
         if (veggies[1] && slot === "supper") foods.push(veggies[1].name);
         if (water) foods.push("Plain Water");
-
         dayMeals[slot] = { foods: foods.length ? foods : ["Boiled Sweet Potato","Beans","Rape"], note: "" };
         if (protein) prevProtein = protein.id;
-
       } else {
-        const snacks = shuffleArray(pool.filter(f =>
-          ["Fruits","Traditional Snacks","Dairy","Drinks"].includes(f.category)
-        ));
-        dayMeals[slot] = {
-          foods: [...snacks.slice(0,2).map(s=>s.name), water ? "Plain Water" : ""].filter(Boolean),
-          note: getSnackNote(conditionId)
-        };
+        const snacks = shuffleArray(pool.filter(f => ["Fruits","Traditional Snacks","Dairy","Drinks"].includes(f.category)));
+        dayMeals[slot] = { foods: [...snacks.slice(0,2).map(s=>s.name), water ? "Plain Water" : ""].filter(Boolean), note: getSnackNote(conditionId) };
       }
     });
-
     applyConditionRules(dayMeals, selectedFoods, conditionId, i);
-
-    days.push({
-      dayNumber: i + 1,
-      dayName: planDuration === 7 ? getDayName(i) : `Day ${i + 1}`,
-      meals: dayMeals,
-      nutritionNote: getDailyNote(conditionId, i)
-    });
+    days.push({ dayNumber: i+1, dayName: planDuration===7 ? getDayName(i) : `Day ${i+1}`, meals: dayMeals, nutritionNote: getDailyNote(conditionId, i) });
   }
-
-  return { generatedAt: Date.now(), conditionId, conditionName: condition?.name || "General", planDuration, days };
+  return { generatedAt: new Date().toISOString(), conditionId, conditionName: condition?.name||"General", planDuration, days };
 }
 
 function applyPortionNote(foodName, conditionId) {
-  if ((conditionId === "diabetes_type2" || conditionId === "diabetes_type1") &&
-      (foodName.toLowerCase().includes("nshima") || foodName.toLowerCase().includes("rice"))) {
-    return `${foodName} (½ cup portion)`;
-  }
+  if ((conditionId==="diabetes_type2"||conditionId==="diabetes_type1") && (foodName.toLowerCase().includes("nshima")||foodName.toLowerCase().includes("rice"))) return `${foodName} (½ cup portion)`;
   return foodName;
 }
-
-function applyConditionRules(dayMeals, selectedFoods, conditionId, dayIndex) {
-  if (conditionId === "anaemia") {
-    const ironFood = selectedFoods.find(f => f.nutrients.iron === "high");
-    const vitCFood = selectedFoods.find(f => f.nutrients.vitaminC === "high");
-    if (ironFood && dayMeals.lunch && !dayMeals.lunch.foods.includes(ironFood.name))
-      dayMeals.lunch.foods.splice(1, 0, ironFood.name);
-    if (vitCFood && dayMeals.lunch && !dayMeals.lunch.foods.includes(vitCFood.name))
-      dayMeals.lunch.foods.push(vitCFood.name);
+function applyConditionRules(dayMeals, selectedFoods, conditionId, i) {
+  if (conditionId==="anaemia") {
+    const ironFood = selectedFoods.find(f=>f.nutrients.iron==="high");
+    const vitCFood = selectedFoods.find(f=>f.nutrients.vitaminC==="high");
+    if (ironFood && dayMeals.lunch && !dayMeals.lunch.foods.includes(ironFood.name)) dayMeals.lunch.foods.splice(1,0,ironFood.name);
+    if (vitCFood && dayMeals.lunch && !dayMeals.lunch.foods.includes(vitCFood.name)) dayMeals.lunch.foods.push(vitCFood.name);
   }
-  if ((conditionId === "diabetes_type2" || conditionId === "diabetes_type1") && dayIndex % 2 === 0) {
-    const special = selectedFoods.find(f => f.name === "Bitter Melon") || selectedFoods.find(f => f.name === "Okra (Delele)");
-    if (special && dayMeals.lunch && !dayMeals.lunch.foods.includes(special.name))
-      dayMeals.lunch.foods.push(special.name);
+  if ((conditionId==="diabetes_type2"||conditionId==="diabetes_type1") && i%2===0) {
+    const special = selectedFoods.find(f=>f.name==="Bitter Melon")||selectedFoods.find(f=>f.name==="Okra (Delele)");
+    if (special && dayMeals.lunch && !dayMeals.lunch.foods.includes(special.name)) dayMeals.lunch.foods.push(special.name);
   }
-  if (conditionId === "malnutrition") {
-    const gnut = selectedFoods.find(f => f.name.includes("Groundnut") || f.name === "Peanut Butter");
-    if (gnut && dayMeals.breakfast && !dayMeals.breakfast.foods.includes(gnut.name))
-      dayMeals.breakfast.foods.push(gnut.name);
+  if (conditionId==="malnutrition") {
+    const gnut = selectedFoods.find(f=>f.name.includes("Groundnut")||f.name==="Peanut Butter");
+    if (gnut && dayMeals.breakfast && !dayMeals.breakfast.foods.includes(gnut.name)) dayMeals.breakfast.foods.push(gnut.name);
   }
 }
-
-function getBreakfastNote(c) {
-  return { gastritis:"Soft, gentle breakfast. Eat slowly.", diabetes_type2:"Pair with protein to slow sugar absorption.", diabetes_type1:"Pair with protein. Time with insulin dose.", anaemia:"Do not take tea or coffee with this meal.", malnutrition:"Add groundnut powder or moringa to porridge." }[c] || "";
-}
-function getSnackNote(c) {
-  return { diabetes_type2:"Keep snack small — one fruit or handful of nuts.", anaemia:"Pair with Vitamin C food to boost iron.", kidney_disease:"Avoid high-potassium fruits.", osteoporosis:"Choose dairy snack for calcium." }[c] || "";
-}
-function getDailyNote(c, i) {
-  const pool = {
-    diabetes_type2: ["Today's plan balances carbohydrates with protein and fiber to keep blood sugar stable.","Eat meals at the same time every day — consistency controls blood sugar.","Drink 2 litres of water today. Dehydration raises blood sugar."],
-    hypertension: ["Cook today's relish without salt or stock cubes. Use fresh garlic and tomatoes.","Today's plan includes potassium-rich foods that naturally lower blood pressure.","Walk for 20 minutes today. Exercise is as powerful as medication for blood pressure."],
-    anaemia: ["Today includes iron-rich foods paired with Vitamin C for maximum absorption.","Do not drink tea within 1 hour of your iron-rich meals today.","Moringa added to any meal provides iron, Vitamin C, and protein together."],
-    general: ["Today's plan provides all major food groups your body needs.","Drink at least 8 glasses of water today.","Variety is the most powerful nutrition strategy — today includes 5 food groups."]
-  }[c] || ["Eat well, stay healthy.","Good nutrition is your best medicine.","Every healthy meal is an investment in your future."];
-  return pool[i % pool.length];
+function getBreakfastNote(c) { return {gastritis:"Soft, gentle breakfast. Eat slowly.",diabetes_type2:"Pair with protein to slow sugar absorption.",diabetes_type1:"Pair with protein. Time with insulin dose.",anaemia:"Do not take tea or coffee with this meal.",malnutrition:"Add groundnut powder or moringa to porridge."}[c]||""; }
+function getSnackNote(c) { return {diabetes_type2:"Keep snack small — one fruit or handful of nuts.",anaemia:"Pair with Vitamin C food to boost iron.",kidney_disease:"Avoid high-potassium fruits.",osteoporosis:"Choose dairy snack for calcium."}[c]||""; }
+function getDailyNote(c,i) {
+  const pool = {diabetes_type2:["Today's plan balances carbohydrates with protein and fiber to keep blood sugar stable.","Eat meals at the same time every day — consistency controls blood sugar.","Drink 2 litres of water today."],hypertension:["Cook today's relish without salt or stock cubes.","Today's plan includes potassium-rich foods that naturally lower blood pressure.","Walk for 20 minutes today."],anaemia:["Today includes iron-rich foods paired with Vitamin C for maximum absorption.","Do not drink tea within 1 hour of iron-rich meals.","Moringa added to any meal provides iron, Vitamin C, and protein."],general:["Today's plan provides all major food groups your body needs.","Drink at least 8 glasses of water today.","Variety is the most powerful nutrition strategy."]}[c]||["Eat well, stay healthy.","Good nutrition is your best medicine.","Every healthy meal is an investment in your future."];
+  return pool[i%pool.length];
 }
 
 export function renderPlanDisplay(plan) {
   const container = document.getElementById("plan-display");
   if (!container) return;
   container.classList.remove("hidden");
-
-  const mealIcons = { breakfast:"☀️", morning_snack:"🍎", lunch:"🍽️", afternoon_snack:"🌤️", supper:"🌙" };
-  const mealLabels = { breakfast:"Breakfast", morning_snack:"Morning Snack", lunch:"Lunch", afternoon_snack:"Afternoon Snack", supper:"Supper" };
-
+  const mealIcons = {breakfast:"☀️",morning_snack:"🍎",lunch:"🍽️",afternoon_snack:"🌤️",supper:"🌙"};
+  const mealLabels = {breakfast:"Breakfast",morning_snack:"Morning Snack",lunch:"Lunch",afternoon_snack:"Afternoon Snack",supper:"Supper"};
   container.innerHTML = `
     <div class="plan-header">
       <h2>${plan.planDuration}-Day Meal Plan</h2>
@@ -389,36 +287,32 @@ export function renderPlanDisplay(plan) {
       <button class="btn-secondary" id="btn-new-plan" style="margin-top:0.75rem;">Generate New Plan</button>
     </div>
     <div class="days-container">
-      ${plan.days.map(day => `
+      ${plan.days.map(day=>`
         <div class="day-card">
           <div class="day-header" onclick="this.parentElement.classList.toggle('expanded')">
-            <span class="day-title">${day.dayName}</span>
-            <span class="day-toggle">▼</span>
+            <span class="day-title">${day.dayName}</span><span class="day-toggle">▼</span>
           </div>
           <div class="day-body">
-            ${Object.entries(day.meals).map(([slot, meal]) => `
+            ${Object.entries(day.meals).map(([slot,meal])=>`
               <div class="meal-section">
                 <div class="meal-title">${mealIcons[slot]||"🍴"} ${mealLabels[slot]||slot}</div>
                 <ul class="meal-foods">${meal.foods.map(f=>`<li>${f}</li>`).join("")}</ul>
-                ${meal.note ? `<p class="meal-note">${meal.note}</p>` : ""}
-              </div>
-            `).join("")}
+                ${meal.note?`<p class="meal-note">${meal.note}</p>`:""}
+              </div>`).join("")}
             <p class="day-nutrition-note">💡 ${day.nutritionNote}</p>
           </div>
-        </div>
-      `).join("")}
+        </div>`).join("")}
     </div>
     <div class="plan-summary-box">
       <h3>Plan Summary</h3>
       <p>This ${plan.planDuration}-day plan is personalized for <strong>${plan.conditionName}</strong>.</p>
       <p>Every meal uses real Zambian foods available at your local market.</p>
       <a href="clinic-finder.html" class="btn-primary">Find a Clinic Near You</a>
-    </div>
-  `;
-
-  document.getElementById("btn-new-plan")?.addEventListener("click", () => {
-    container.classList.add("hidden");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
+    </div>`;
+  document.getElementById("btn-new-plan")?.addEventListener("click", () => { container.classList.add("hidden"); window.scrollTo({top:0,behavior:"smooth"}); });
   container.querySelector(".day-card")?.classList.add("expanded");
+}
+
+async function savePlanToFirestore(plan) {
+  await addDoc(collection(db, "mealPlans"), { userId: currentUser.uid, plan, conditionId: plan.conditionId, planDuration: plan.planDuration, createdAt: serverTimestamp() });
 }

@@ -1,39 +1,31 @@
-import { auth } from "./firebase-config.js";
+import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
-import { getProfile } from "./firebase-config.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
 export function requireAuth(redirectTo = "index.html") {
   return new Promise((resolve, reject) => {
     onAuthStateChanged(auth, user => {
-      if (user) {
-        resolve(user);
-      } else {
-        window.location.href = redirectTo;
-        reject(new Error("Not authenticated"));
-      }
+      if (user) { resolve(user); }
+      else { window.location.href = redirectTo; reject(new Error("Not authenticated")); }
     });
   });
 }
 
-export function loadUserProfile(uid) {
-  return getProfile(uid);
-}
-
-export function getFirstName(fullName) {
-  if (!fullName) return "User";
-  return fullName.split(" ")[0];
+export async function loadUserProfile(uid) {
+  const snap = await getDoc(doc(db, "users", uid));
+  return snap.exists() ? snap.data() : null;
 }
 
 export function formatDate(timestamp) {
   if (!timestamp) return "Never";
-  const d = new Date(typeof timestamp === "object" && timestamp.toDate ? timestamp.toDate() : timestamp);
-  return d.toLocaleDateString("en-ZM", { year: "numeric", month: "short", day: "numeric" });
+  const d = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  return d.toLocaleDateString("en-ZM", { year:"numeric", month:"short", day:"numeric" });
 }
 
 export function formatDateShort(timestamp) {
   if (!timestamp) return "—";
-  const d = new Date(typeof timestamp === "object" && timestamp.toDate ? timestamp.toDate() : timestamp);
-  return d.toLocaleDateString("en-ZM", { month: "short", day: "numeric", year: "numeric" });
+  const d = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  return d.toLocaleDateString("en-ZM", { month:"short", day:"numeric", year:"numeric" });
 }
 
 export function showToast(message, type = "success") {
@@ -44,22 +36,17 @@ export function showToast(message, type = "success") {
   toast.textContent = message;
   document.body.appendChild(toast);
   requestAnimationFrame(() => toast.classList.add("toast-show"));
-  setTimeout(() => {
-    toast.classList.remove("toast-show");
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
+  setTimeout(() => { toast.classList.remove("toast-show"); setTimeout(() => toast.remove(), 300); }, 3000);
 }
 
 export function showLoading(containerId) {
   const el = document.getElementById(containerId);
-  if (!el) return;
-  el.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>Loading...</p></div>';
+  if (el) el.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>Loading...</p></div>';
 }
 
 export function showError(containerId, message) {
   const el = document.getElementById(containerId);
-  if (!el) return;
-  el.innerHTML = `<div class="empty-state"><p class="empty-state-icon">⚠️</p><p>${message}</p></div>`;
+  if (el) el.innerHTML = `<div class="empty-state"><p class="empty-state-icon">⚠️</p><p>${message}</p></div>`;
 }
 
 export function getConditionBadgeColor(conditionId) {
@@ -74,14 +61,9 @@ export function getConditionBadgeColor(conditionId) {
   return colorMap[conditionId] || "#566573";
 }
 
-export function capitalizeFirst(str) {
-  if (!str) return "";
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-export function debounce(fn, delay = 300) {
-  let timer;
-  return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); };
+export function getInitials(name) {
+  if (!name) return "U";
+  return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
 }
 
 export function getDayName(dayIndex) {
@@ -97,11 +79,9 @@ export function shuffleArray(arr) {
   return a;
 }
 
-export function getInitials(name) {
-  if (!name) return "U";
-  return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
-}
-
-export function setPageTitle(title) {
-  document.title = `${title} — Umoyo360`;
-}
+export function getInitials2(name) { return getInitials(name); }
+export function formatDate2(ts) { return formatDate(ts); }
+export function capitalizeFirst(str) { return str ? str.charAt(0).toUpperCase() + str.slice(1) : ""; }
+export function debounce(fn, delay = 300) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); }; }
+export function getFirstName(fullName) { return fullName ? fullName.split(" ")[0] : "User"; }
+export function setPageTitle(title) { document.title = `${title} — Umoyo360`; }

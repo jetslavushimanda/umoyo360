@@ -1,5 +1,6 @@
-import { auth, saveProfile, getProfile } from "./firebase-config.js";
-import { requireAuth, showToast, getInitials, formatDate, getConditionBadgeColor } from "./utils.js";
+import { auth, db } from "./firebase-config.js";
+import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+import { requireAuth, loadUserProfile, showToast, getInitials, formatDate, getConditionBadgeColor } from "./utils.js";
 import { getConditionById, CONDITION_NAMES } from "./conditions.js";
 import { populateProvinceDropdown, populateDistrictDropdown } from "./districts.js";
 import { resetPassword } from "./auth.js";
@@ -10,7 +11,7 @@ let userProfile = null;
 export async function initProfilePage() {
   try {
     currentUser = await requireAuth();
-    userProfile = getProfile(currentUser.uid);
+    userProfile = await loadUserProfile(currentUser.uid);
     if (!userProfile) { window.location.href = "dashboard.html"; return; }
     renderProfile();
     setupEditHandlers();
@@ -25,10 +26,7 @@ function renderProfile() {
   document.getElementById("profile-since").textContent = formatDate(userProfile.createdAt);
 
   const badge = document.getElementById("condition-badge");
-  if (badge) {
-    badge.textContent = condition ? condition.name : "Unknown";
-    badge.style.background = getConditionBadgeColor(userProfile.condition);
-  }
+  if (badge) { badge.textContent = condition ? condition.name : "Unknown"; badge.style.background = getConditionBadgeColor(userProfile.condition); }
 
   setField("field-fullname", userProfile.fullName);
   setField("field-dob", userProfile.dob || "—");
@@ -44,30 +42,23 @@ function renderProfile() {
   setField("field-condition-desc", condition ? condition.description : "—");
 }
 
-function setField(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value;
-}
+function setField(id, value) { const el = document.getElementById(id); if (el) el.textContent = value; }
 
 function setupEditHandlers() {
   document.getElementById("btn-edit-profile")?.addEventListener("click", enterEditMode);
-  document.getElementById("btn-save-profile")?.addEventListener("click", saveProfileData);
+  document.getElementById("btn-save-profile")?.addEventListener("click", saveProfile);
   document.getElementById("btn-cancel-edit")?.addEventListener("click", cancelEdit);
   document.getElementById("btn-logout")?.addEventListener("click", confirmLogout);
   document.getElementById("btn-change-password")?.addEventListener("click", handlePasswordReset);
 
-  const provinceSelect = document.getElementById("edit-province");
-  if (provinceSelect) {
-    provinceSelect.addEventListener("change", () => {
-      populateDistrictDropdown(document.getElementById("edit-district"), provinceSelect.value);
-    });
-  }
+  document.getElementById("edit-province")?.addEventListener("change", e => {
+    populateDistrictDropdown(document.getElementById("edit-district"), e.target.value);
+  });
 }
 
 function enterEditMode() {
   document.getElementById("view-mode").classList.add("hidden");
   document.getElementById("edit-mode").classList.remove("hidden");
-
   document.getElementById("edit-fullname").value = userProfile.fullName || "";
   document.getElementById("edit-sex").value = userProfile.sex || "";
   document.getElementById("edit-town").value = userProfile.town || "";
@@ -78,8 +69,7 @@ function enterEditMode() {
   condSelect.innerHTML = "";
   CONDITION_NAMES.forEach(c => {
     const opt = document.createElement("option");
-    opt.value = c.id;
-    opt.textContent = c.name;
+    opt.value = c.id; opt.textContent = c.name;
     if (c.id === userProfile.condition) opt.selected = true;
     condSelect.appendChild(opt);
   });
@@ -93,10 +83,9 @@ function cancelEdit() {
   document.getElementById("edit-mode").classList.add("hidden");
 }
 
-function saveProfileData() {
+async function saveProfile() {
   const btn = document.getElementById("btn-save-profile");
-  btn.disabled = true;
-  btn.textContent = "Saving...";
+  btn.disabled = true; btn.textContent = "Saving...";
 
   const newCondition = document.getElementById("edit-condition").value;
   const conditionChanged = newCondition !== userProfile.condition;
@@ -109,31 +98,28 @@ function saveProfileData() {
     town: document.getElementById("edit-town").value.trim(),
     familySize: parseInt(document.getElementById("edit-family-size").value, 10),
     allergies: document.getElementById("edit-allergies").value.trim(),
-    condition: newCondition
+    condition: newCondition,
+    updatedAt: serverTimestamp()
   };
 
-  Object.assign(userProfile, updates);
-  saveProfile(currentUser.uid, userProfile);
-  renderProfile();
-  cancelEdit();
-  showToast("Profile updated successfully.");
-  if (conditionChanged) showToast("Condition updated — generate a new meal plan for fresh recommendations.", "info");
-
-  btn.disabled = false;
-  btn.textContent = "Save Changes";
+  try {
+    await updateDoc(doc(db, "users", currentUser.uid), updates);
+    Object.assign(userProfile, updates);
+    renderProfile(); cancelEdit();
+    showToast("Profile updated successfully.");
+    if (conditionChanged) showToast("Condition updated — generate a new meal plan for updated recommendations.", "info");
+  } catch (err) {
+    showToast("Failed to save. Please try again.", "error");
+  } finally {
+    btn.disabled = false; btn.textContent = "Save Changes";
+  }
 }
 
 async function handlePasswordReset() {
-  try {
-    await resetPassword(currentUser.email);
-    showToast("Password reset email sent. Check your inbox.");
-  } catch {
-    showToast("Failed to send reset email.", "error");
-  }
+  try { await resetPassword(currentUser.email); showToast("Password reset email sent."); }
+  catch { showToast("Failed to send reset email.", "error"); }
 }
 
 function confirmLogout() {
-  if (confirm("Are you sure you want to logout?")) {
-    import("./auth.js").then(m => m.logoutUser());
-  }
+  if (confirm("Are you sure you want to logout?")) import("./auth.js").then(m => m.logoutUser());
 }
