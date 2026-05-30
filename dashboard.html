@@ -12,9 +12,7 @@
 <header class="dashboard-header">
   <span class="dashboard-logo">UMOYO360</span>
   <div class="dashboard-user">
-    <div class="user-greeting">
-      Welcome, <strong id="user-name">...</strong>
-    </div>
+    <div class="user-greeting">Welcome, <strong id="user-name">...</strong></div>
     <span class="location-badge" id="location-badge">Loading...</span>
     <span class="badge badge-condition" id="condition-badge">...</span>
     <button class="btn-danger" id="btn-logout" style="padding:0.4rem 1rem;font-size:0.8rem;">Logout</button>
@@ -73,16 +71,15 @@
 </main>
 
 <script type="module">
-  import { requireAuth, loadUserProfile, formatDate, getConditionBadgeColor } from "./js/utils.js";
+  import { requireAuth, formatDate, getConditionBadgeColor } from "./js/utils.js";
   import { getConditionById } from "./js/conditions.js";
   import { logoutUser } from "./js/auth.js";
-  import { db } from "./js/firebase-config.js";
-  import { collection, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getProfile, getMealPlans } from "./js/firebase-config.js";
 
   (async () => {
     try {
       const user = await requireAuth();
-      const profile = await loadUserProfile(user.uid);
+      const profile = getProfile(user.uid);
       if (!profile) return;
 
       const condition = getConditionById(profile.condition);
@@ -96,15 +93,10 @@
       document.getElementById("stat-location").textContent = `${profile.district}, ${profile.province}`;
       document.getElementById("stat-since").textContent = formatDate(profile.createdAt);
 
-      // Last plan
-      try {
-        const q = query(collection(db,"mealPlans"), where("userId","==",user.uid), orderBy("createdAt","desc"), limit(1));
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-          const last = snap.docs[0].data();
-          document.getElementById("stat-last-plan").textContent = formatDate(last.createdAt);
-        }
-      } catch { /* no plans yet */ }
+      const plans = getMealPlans(user.uid);
+      if (plans.length > 0) {
+        document.getElementById("stat-last-plan").textContent = formatDate(plans[0].createdAt);
+      }
 
       document.getElementById("btn-logout").addEventListener("click", () => {
         if (confirm("Logout?")) logoutUser();

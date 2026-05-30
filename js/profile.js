@@ -1,18 +1,16 @@
-import { auth, db } from "./firebase-config.js";
-import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
-import { requireAuth, loadUserProfile, showToast, getInitials, formatDate, getConditionBadgeColor } from "./utils.js";
+import { auth, saveProfile, getProfile } from "./firebase-config.js";
+import { requireAuth, showToast, getInitials, formatDate, getConditionBadgeColor } from "./utils.js";
 import { getConditionById, CONDITION_NAMES } from "./conditions.js";
-import { populateProvinceDropdown, populateDistrictDropdown, getDistricts } from "./districts.js";
+import { populateProvinceDropdown, populateDistrictDropdown } from "./districts.js";
 import { resetPassword } from "./auth.js";
 
 let currentUser = null;
 let userProfile = null;
-let isEditing = false;
 
 export async function initProfilePage() {
   try {
     currentUser = await requireAuth();
-    userProfile = await loadUserProfile(currentUser.uid);
+    userProfile = getProfile(currentUser.uid);
     if (!userProfile) { window.location.href = "dashboard.html"; return; }
     renderProfile();
     setupEditHandlers();
@@ -21,7 +19,6 @@ export async function initProfilePage() {
 
 function renderProfile() {
   const condition = getConditionById(userProfile.condition);
-
   document.getElementById("avatar-initials").textContent = getInitials(userProfile.fullName);
   document.getElementById("profile-name").textContent = userProfile.fullName || "—";
   document.getElementById("profile-email").textContent = userProfile.email || "—";
@@ -54,7 +51,7 @@ function setField(id, value) {
 
 function setupEditHandlers() {
   document.getElementById("btn-edit-profile")?.addEventListener("click", enterEditMode);
-  document.getElementById("btn-save-profile")?.addEventListener("click", saveProfile);
+  document.getElementById("btn-save-profile")?.addEventListener("click", saveProfileData);
   document.getElementById("btn-cancel-edit")?.addEventListener("click", cancelEdit);
   document.getElementById("btn-logout")?.addEventListener("click", confirmLogout);
   document.getElementById("btn-change-password")?.addEventListener("click", handlePasswordReset);
@@ -68,7 +65,6 @@ function setupEditHandlers() {
 }
 
 function enterEditMode() {
-  isEditing = true;
   document.getElementById("view-mode").classList.add("hidden");
   document.getElementById("edit-mode").classList.remove("hidden");
 
@@ -88,18 +84,16 @@ function enterEditMode() {
     condSelect.appendChild(opt);
   });
 
-  const provinceSelect = document.getElementById("edit-province");
-  populateProvinceDropdown(provinceSelect, userProfile.province);
+  populateProvinceDropdown(document.getElementById("edit-province"), userProfile.province);
   populateDistrictDropdown(document.getElementById("edit-district"), userProfile.province, userProfile.district);
 }
 
 function cancelEdit() {
-  isEditing = false;
   document.getElementById("view-mode").classList.remove("hidden");
   document.getElementById("edit-mode").classList.add("hidden");
 }
 
-async function saveProfile() {
+function saveProfileData() {
   const btn = document.getElementById("btn-save-profile");
   btn.disabled = true;
   btn.textContent = "Saving...";
@@ -115,25 +109,18 @@ async function saveProfile() {
     town: document.getElementById("edit-town").value.trim(),
     familySize: parseInt(document.getElementById("edit-family-size").value, 10),
     allergies: document.getElementById("edit-allergies").value.trim(),
-    condition: newCondition,
-    updatedAt: serverTimestamp()
+    condition: newCondition
   };
 
-  try {
-    await updateDoc(doc(db, "users", currentUser.uid), updates);
-    Object.assign(userProfile, updates);
-    renderProfile();
-    cancelEdit();
-    showToast("Profile updated successfully.");
-    if (conditionChanged) {
-      showToast("Your health condition changed. Generate a new meal plan for updated recommendations.", "info");
-    }
-  } catch (err) {
-    showToast("Failed to save profile. Please try again.", "error");
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "Save Changes";
-  }
+  Object.assign(userProfile, updates);
+  saveProfile(currentUser.uid, userProfile);
+  renderProfile();
+  cancelEdit();
+  showToast("Profile updated successfully.");
+  if (conditionChanged) showToast("Condition updated — generate a new meal plan for fresh recommendations.", "info");
+
+  btn.disabled = false;
+  btn.textContent = "Save Changes";
 }
 
 async function handlePasswordReset() {

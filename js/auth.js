@@ -1,4 +1,4 @@
-import { auth, db } from "./firebase-config.js";
+import { auth, saveProfile } from "./firebase-config.js";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -6,40 +6,28 @@ import {
   onAuthStateChanged,
   sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
-import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
-// ── Login ─────────────────────────────────────────────────────────────────
 export async function loginUser(email, password) {
   const cred = await signInWithEmailAndPassword(auth, email, password);
   return cred.user;
 }
 
-// ── Register ──────────────────────────────────────────────────────────────
 export async function registerUser(email, password, profileData) {
   const cred = await createUserWithEmailAndPassword(auth, email, password);
   const uid = cred.user.uid;
-  await setDoc(doc(db, "users", uid), {
-    ...profileData,
-    email,
-    uid,
-    createdAt: serverTimestamp(),
-    lastLogin: serverTimestamp()
-  });
+  saveProfile(uid, { ...profileData, email, uid, createdAt: Date.now() });
   return cred.user;
 }
 
-// ── Logout ────────────────────────────────────────────────────────────────
 export async function logoutUser() {
   await signOut(auth);
   window.location.href = "index.html";
 }
 
-// ── Password reset ────────────────────────────────────────────────────────
 export async function resetPassword(email) {
   await sendPasswordResetEmail(auth, email);
 }
 
-// ── Auth state guard ──────────────────────────────────────────────────────
 export function guardPage(redirectIfLoggedIn = false, redirectTo = "index.html") {
   onAuthStateChanged(auth, user => {
     if (redirectIfLoggedIn && user) {
@@ -50,12 +38,10 @@ export function guardPage(redirectIfLoggedIn = false, redirectTo = "index.html")
   });
 }
 
-// ── Get current user ──────────────────────────────────────────────────────
 export function getCurrentUser() {
   return auth.currentUser;
 }
 
-// ── Error messages ────────────────────────────────────────────────────────
 export function getAuthErrorMessage(code) {
   const messages = {
     "auth/user-not-found": "No account found with this email address.",
@@ -70,7 +56,6 @@ export function getAuthErrorMessage(code) {
   return messages[code] || "Something went wrong. Please try again.";
 }
 
-// ── Login page logic (runs on index.html) ─────────────────────────────────
 export function initLoginPage() {
   guardPage(true);
 
@@ -88,7 +73,6 @@ export function initLoginPage() {
     errorEl.textContent = "";
     btnLogin.disabled = true;
     btnLogin.textContent = "Logging in...";
-
     try {
       await loginUser(emailInput.value.trim(), passwordInput.value);
       window.location.href = "dashboard.html";

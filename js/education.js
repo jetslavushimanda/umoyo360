@@ -1,4 +1,5 @@
-import { requireAuth, loadUserProfile, getConditionBadgeColor } from "./utils.js";
+import { auth, getProfile } from "./firebase-config.js";
+import { requireAuth, getConditionBadgeColor } from "./utils.js";
 import { CONDITIONS, getConditionById } from "./conditions.js";
 import { getForbiddenFoodsForCondition, getRecommendedFoodsForCondition } from "./foods-database.js";
 
@@ -7,7 +8,7 @@ let userProfile = null;
 export async function initEducationPage() {
   try {
     const user = await requireAuth();
-    userProfile = await loadUserProfile(user.uid);
+    userProfile = getProfile(user.uid);
     renderConditionGrid();
     handleHashNavigation();
   } catch (e) { /* redirected */ }
@@ -16,8 +17,8 @@ export async function initEducationPage() {
 function renderConditionGrid() {
   const grid = document.getElementById("condition-grid");
   if (!grid) return;
-
   grid.innerHTML = "";
+
   CONDITIONS.forEach(cond => {
     const isUserCondition = userProfile && userProfile.condition === cond.id;
     const card = document.createElement("div");
@@ -60,63 +61,24 @@ function showConditionDetail(conditionId) {
       <span class="meals-badge-lg">${cond.mealsPerDay} meals per day</span>
     </div>
     <div class="detail-body">
-      ${isUserCondition ? `
-        <div class="personalized-banner">
-          <strong>This is YOUR condition.</strong> Your meal plan is already personalized for this.
-        </div>
-      ` : ""}
-
-      <section class="detail-section">
-        <h3>What Is It?</h3>
-        <p>${cond.description}</p>
-      </section>
-
-      <section class="detail-section">
-        <h3>How Poor Diet Causes It</h3>
-        <p>${cond.howDietCausesIt}</p>
-      </section>
-
+      ${isUserCondition ? `<div class="personalized-banner"><strong>This is YOUR condition.</strong> Your meal plan is already personalized for this.</div>` : ""}
+      <section class="detail-section"><h3>What Is It?</h3><p>${cond.description}</p></section>
+      <section class="detail-section"><h3>How Poor Diet Causes It</h3><p>${cond.howDietCausesIt}</p></section>
       <section class="detail-section">
         <h3>Zambian Foods That Help</h3>
         <div class="food-grid-sm">
-          ${recommended.map(f => `
-            <div class="food-chip food-chip-green">
-              <span>${f.icon || "🌿"}</span>
-              <span>${f.name}</span>
-              <small>${f.localName}</small>
-            </div>
-          `).join("") || "<p>General balanced diet recommended.</p>"}
+          ${recommended.map(f=>`<div class="food-chip food-chip-green"><span>${f.icon||"🌿"}</span><span>${f.name}</span><small>${f.localName}</small></div>`).join("")||"<p>General balanced diet recommended.</p>"}
         </div>
       </section>
-
       <section class="detail-section">
         <h3>Foods to Avoid</h3>
         <div class="food-grid-sm">
-          ${forbidden.map(f => `
-            <div class="food-chip food-chip-red">
-              <span>${f.icon || "🚫"}</span>
-              <span>${f.name}</span>
-              <small>${f.localName}</small>
-            </div>
-          `).join("") || "<p>No specific foods to avoid.</p>"}
+          ${forbidden.map(f=>`<div class="food-chip food-chip-red"><span>${f.icon||"🚫"}</span><span>${f.name}</span><small>${f.localName}</small></div>`).join("")||"<p>No specific foods to avoid.</p>"}
         </div>
       </section>
-
-      <section class="detail-section">
-        <h3>Warning Signs</h3>
-        <p>${cond.warningSignsText}</p>
-      </section>
-
-      <section class="detail-section tip-box">
-        <h3>Daily Prevention Tip</h3>
-        <p>${cond.zambian_tip}</p>
-      </section>
-
-      <section class="detail-section warning-box">
-        <h3>When to See a Doctor</h3>
-        <p>${cond.whenToSeeDoctor}</p>
-      </section>
-
+      <section class="detail-section"><h3>Warning Signs</h3><p>${cond.warningSignsText}</p></section>
+      <section class="detail-section tip-box"><h3>Daily Prevention Tip</h3><p>${cond.zambian_tip}</p></section>
+      <section class="detail-section warning-box"><h3>When to See a Doctor</h3><p>${cond.whenToSeeDoctor}</p></section>
       <div class="detail-actions">
         <a href="clinic-finder.html" class="btn-primary">Find a Clinic Near You</a>
         <a href="meal-planner.html" class="btn-secondary">Open Meal Planner</a>
@@ -136,8 +98,5 @@ function showConditionDetail(conditionId) {
 }
 
 function handleHashNavigation() {
-  if (window.location.hash) {
-    const id = window.location.hash.slice(1);
-    if (id) showConditionDetail(id);
-  }
+  if (window.location.hash) showConditionDetail(window.location.hash.slice(1));
 }
