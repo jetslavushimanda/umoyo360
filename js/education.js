@@ -65,8 +65,8 @@ function showConditionDetail(conditionId) {
       <section class="detail-section tip-box"><h3>Daily Prevention Tip</h3><p>${cond.zambian_tip}</p></section>
       <section class="detail-section warning-box"><h3>When to See a Doctor</h3><p>${cond.whenToSeeDoctor}</p></section>
       <div class="detail-actions">
-        <a href="clinic-finder.html" class="btn-primary">Find a Clinic Near You</a>
-        <a href="meal-planner.html" class="btn-secondary">Open Meal Planner</a>
+        <a href="meal-planner.html" class="btn-primary">Open Meal Planner</a>
+        <a href="bmi-calculator.html" class="btn-secondary">Check Your BMI</a>
       </div>
     </div>`;
   document.getElementById("condition-grid-section").classList.add("hidden");

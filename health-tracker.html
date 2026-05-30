@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Health Tracker — Umoyo360</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .tracker-page { min-height:100vh; background:var(--bg-light); }
+    .tracker-body { padding:1rem; max-width:700px; margin:0 auto; }
+    .tracker-card { background:var(--bg-white); border-radius:var(--radius); padding:1.5rem; box-shadow:var(--shadow); margin-bottom:1.25rem; }
+    .tracker-card h2 { font-size:1rem; color:var(--primary); margin-bottom:1.25rem; display:flex; align-items:center; gap:0.5rem; }
+
+    /* Stats grid */
+    .tracker-stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.875rem; margin-bottom:1.25rem; }
+    .tracker-stat-card { background:var(--bg-white); border-radius:var(--radius); padding:1.25rem; box-shadow:var(--shadow); text-align:center; border-top:3px solid var(--primary); }
+    .tracker-stat-card .icon { color:var(--primary); margin-bottom:0.5rem; }
+    .tracker-stat-value { font-size:1.75rem; font-weight:900; color:var(--primary); display:block; }
+    .tracker-stat-label { font-size:0.72rem; color:var(--text-medium); font-weight:600; text-transform:uppercase; letter-spacing:0.04em; }
+    .tracker-stat-change { font-size:0.78rem; font-weight:700; margin-top:0.25rem; }
+    .change-good { color:var(--accent-green); }
+    .change-up { color:var(--accent-orange); }
+    .progress-bar-wrap { height:6px; background:var(--border); border-radius:3px; margin-top:0.5rem; overflow:hidden; }
+    .progress-bar-fill { height:100%; border-radius:3px; transition:width 0.6s ease; }
+
+    /* Energy buttons */
+    .energy-buttons, .adherence-buttons { display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.4rem; }
+    .energy-btn, .adherence-btn { padding:0.4rem 0.875rem; border:2px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-light); font-size:0.875rem; font-weight:600; cursor:pointer; min-height:44px; transition:all 0.2s; }
+    .energy-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+    .adherence-btn[data-value="yes"].active { background:var(--accent-green); color:#fff; border-color:var(--accent-green); }
+    .adherence-btn[data-value="no"].active { background:var(--accent-red); color:#fff; border-color:var(--accent-red); }
+
+    /* Weight chart */
+    .weight-chart-card { background:var(--bg-white); border-radius:var(--radius); padding:1.25rem; box-shadow:var(--shadow); margin-bottom:1.25rem; overflow:hidden; }
+    .weight-chart-card h2 { font-size:1rem; color:var(--primary); margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem; }
+    .empty-chart { text-align:center; padding:2rem; color:var(--text-medium); font-size:0.875rem; display:flex; align-items:center; gap:0.5rem; justify-content:center; }
+
+    /* Log list */
+    .log-row { padding:0.875rem; background:var(--bg-light); border-radius:var(--radius-sm); margin-bottom:0.5rem; display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center; }
+    .log-date, .log-weight, .log-energy, .log-meal { display:flex; align-items:center; gap:0.3rem; font-size:0.8rem; font-weight:600; }
+    .log-date { color:var(--text-medium); flex:1; min-width:80px; }
+    .log-weight { color:var(--primary); }
+    .log-energy { }
+    .log-meal { }
+    .meal-yes { color:var(--accent-green); }
+    .meal-no { color:var(--accent-red); }
+    .log-notes-text { width:100%; font-size:0.78rem; color:var(--text-medium); font-style:italic; padding-top:0.25rem; border-top:1px solid var(--border); }
+    .icon { display:inline-block; vertical-align:middle; }
+
+    @media (min-width:600px) {
+      .tracker-stats-grid { grid-template-columns:repeat(4,1fr); }
+      .tracker-body { padding:1.5rem; }
+    }
+    @media (min-width:768px) { .tracker-body { padding:2rem; } }
+  </style>
+</head>
+<body class="tracker-page">
+
+<header class="page-header">
+  <a href="dashboard.html" class="btn-back-nav" id="back-btn"></a>
+  <h1>Health Progress Tracker</h1>
+</header>
+
+<main class="tracker-body">
+
+  <!-- Stats summary -->
+  <div class="tracker-stats-grid" id="tracker-stats">
+    <div class="loading-spinner" style="grid-column:1/-1;"><div class="spinner"></div></div>
+  </div>
+
+  <!-- Weight chart -->
+  <div class="weight-chart-card">
+    <h2 id="chart-title"></h2>
+    <div id="weight-chart"><div class="empty-chart"><p>Loading chart...</p></div></div>
+  </div>
+
+  <!-- Add log form -->
+  <div class="tracker-card">
+    <h2 id="log-form-title"></h2>
+
+    <div class="form-group">
+      <label for="log-date">Date</label>
+      <input type="date" id="log-date" class="input-field">
+    </div>
+
+    <div class="form-group">
+      <label for="log-weight">Weight (kg) — optional</label>
+      <input type="number" id="log-weight" class="input-field" placeholder="e.g. 68.5" min="20" max="300" step="0.1">
+    </div>
+
+    <div class="form-group">
+      <label>Energy Level Today</label>
+      <div class="energy-buttons">
+        <button class="energy-btn" data-level="1">1 — Very Low</button>
+        <button class="energy-btn" data-level="2">2 — Low</button>
+        <button class="energy-btn active" data-level="3">3 — Moderate</button>
+        <button class="energy-btn" data-level="4">4 — Good</button>
+        <button class="energy-btn" data-level="5">5 — Excellent</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Did you follow your meal plan today?</label>
+      <div class="adherence-buttons">
+        <button class="adherence-btn active" data-value="yes">Yes, I followed it</button>
+        <button class="adherence-btn" data-value="no">No, I did not</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="log-notes">Notes (optional)</label>
+      <textarea id="log-notes" class="input-field" rows="2" placeholder="How did you feel today? Any symptoms?"></textarea>
+    </div>
+
+    <button class="btn-green btn-full" id="btn-save-log"></button>
+  </div>
+
+  <!-- Log history -->
+  <div class="tracker-card">
+    <h2 id="log-history-title"></h2>
+    <div id="log-list"><div class="loading-spinner"><div class="spinner"></div></div></div>
+  </div>
+
+</main>
+
+<script type="module">
+  import { initHealthTrackerPage } from "./js/health-tracker.js";
+  import { icon } from "./js/icons.js";
+
+  document.getElementById("back-btn").innerHTML = icon("arrowLeft", 22);
+  document.getElementById("chart-title").innerHTML = icon("tracker",20) + " Weight Progress";
+  document.getElementById("log-form-title").innerHTML = icon("plus",20) + " Add Today's Log";
+  document.getElementById("btn-save-log").innerHTML = icon("check",18) + " Save Log";
+  document.getElementById("log-history-title").innerHTML = icon("calendar",20) + " Recent Logs";
+
+  initHealthTrackerPage();
+</script>
+</body>
+</html>

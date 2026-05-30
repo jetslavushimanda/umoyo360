@@ -6,6 +6,10 @@
   <title>Dashboard — Umoyo360</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/dashboard.css">
+  <style>
+    .module-icon svg { width:28px; height:28px; stroke:var(--primary); }
+    .icon { display:inline-block; vertical-align:middle; }
+  </style>
 </head>
 <body class="dashboard-page">
 
@@ -15,32 +19,38 @@
     <div class="user-greeting">Welcome, <strong id="user-name">...</strong></div>
     <span class="location-badge" id="location-badge">Loading...</span>
     <span class="badge badge-condition" id="condition-badge">...</span>
-    <button class="btn-danger" id="btn-logout" style="padding:0.4rem 1rem;font-size:0.8rem;">Logout</button>
+    <button class="btn-danger" id="btn-logout" style="padding:0.4rem 0.875rem;font-size:0.8rem;display:flex;align-items:center;gap:0.4rem;" id="logout-btn"></button>
   </div>
 </header>
 
 <main class="dashboard-body">
   <div class="module-grid">
     <a href="meal-planner.html" class="module-card">
-      <div class="module-icon">🍽️</div>
+      <div class="module-icon" id="icon-meal"></div>
       <h3>Meal Planner</h3>
       <p class="module-desc">Get your personalized nutrition plan using foods you have at home.</p>
       <span class="module-cta">Open Planner →</span>
     </a>
     <a href="education.html" class="module-card">
-      <div class="module-icon">📖</div>
+      <div class="module-icon" id="icon-edu"></div>
       <h3>Health Education</h3>
       <p class="module-desc">Learn about your condition and how to prevent disease through nutrition.</p>
       <span class="module-cta">Learn Now →</span>
     </a>
-    <a href="clinic-finder.html" class="module-card">
-      <div class="module-icon">🏥</div>
-      <h3>Clinic Finder</h3>
-      <p class="module-desc">Find health facilities near you across all 10 provinces.</p>
-      <span class="module-cta">Find Clinic →</span>
+    <a href="bmi-calculator.html" class="module-card">
+      <div class="module-icon" id="icon-bmi"></div>
+      <h3>BMI Calculator</h3>
+      <p class="module-desc">Calculate your Body Mass Index and get personalized health advice.</p>
+      <span class="module-cta">Calculate →</span>
     </a>
-    <a href="profile.html" class="module-card">
-      <div class="module-icon">👤</div>
+    <a href="health-tracker.html" class="module-card">
+      <div class="module-icon" id="icon-tracker"></div>
+      <h3>Health Tracker</h3>
+      <p class="module-desc">Track your weight, energy levels, and meal plan progress over time.</p>
+      <span class="module-cta">Track Progress →</span>
+    </a>
+    <a href="profile.html" class="module-card" style="grid-column: span 2;">
+      <div class="module-icon" id="icon-profile"></div>
       <h3>My Profile</h3>
       <p class="module-desc">View and update your health profile and account settings.</p>
       <span class="module-cta">View Profile →</span>
@@ -64,6 +74,15 @@
   import { logoutUser } from "./js/auth.js";
   import { db } from "./js/firebase-config.js";
   import { collection, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+  import { icon } from "./js/icons.js";
+
+  // Inject SVG icons
+  document.getElementById("icon-meal").innerHTML = icon("mealPlanner", 28);
+  document.getElementById("icon-edu").innerHTML = icon("education", 28);
+  document.getElementById("icon-bmi").innerHTML = icon("bmi", 28);
+  document.getElementById("icon-tracker").innerHTML = icon("tracker", 28);
+  document.getElementById("icon-profile").innerHTML = icon("profile", 28);
+  document.getElementById("btn-logout").innerHTML = icon("logout", 16) + " Logout";
 
   (async () => {
     try {

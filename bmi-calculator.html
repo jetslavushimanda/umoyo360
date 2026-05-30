@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BMI Calculator — Umoyo360</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .bmi-page { min-height:100vh; background:var(--bg-light); }
+    .bmi-body { padding:1rem; max-width:600px; margin:0 auto; }
+    .unit-toggle-group { display:flex; border:2px solid var(--primary); border-radius:var(--radius-sm); overflow:hidden; width:fit-content; margin-bottom:1.5rem; }
+    .unit-toggle { padding:0.5rem 1.25rem; background:transparent; color:var(--primary); border:none; font-weight:600; font-size:0.875rem; min-height:44px; cursor:pointer; transition:all 0.2s; }
+    .unit-toggle.active { background:var(--primary); color:#fff; }
+    .bmi-form-card { background:var(--bg-white); border-radius:var(--radius); padding:1.5rem; box-shadow:var(--shadow); margin-bottom:1.25rem; }
+    .bmi-form-card h2 { font-size:1rem; color:var(--primary); margin-bottom:1.25rem; display:flex; align-items:center; gap:0.5rem; }
+    .input-row { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
+    .bmi-result-card { background:var(--bg-white); border-radius:var(--radius); padding:1.5rem; box-shadow:var(--shadow); margin-bottom:1.25rem; }
+    .bmi-score-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; }
+    .bmi-score { font-size:3.5rem; font-weight:900; line-height:1; }
+    .bmi-score-label { font-size:0.75rem; color:var(--text-medium); font-weight:600; text-transform:uppercase; }
+    .bmi-category-badge { padding:0.4rem 1rem; border-radius:20px; color:#fff; font-weight:700; font-size:0.875rem; }
+    .bmi-gauge { position:relative; margin-bottom:1.25rem; }
+    .bmi-gauge-bar { display:flex; height:12px; border-radius:6px; overflow:hidden; gap:2px; margin-bottom:6px; }
+    .bmi-gauge-segment { height:100%; }
+    .bmi-gauge-labels { display:flex; justify-content:space-between; }
+    .bmi-gauge-labels span { font-size:0.65rem; color:var(--text-medium); text-align:center; flex:1; line-height:1.3; }
+    .bmi-needle { position:absolute; top:-4px; width:4px; height:20px; border-radius:2px; transform:translateX(-50%); transition:left 0.5s ease; }
+    .bmi-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.75rem; margin:1rem 0; }
+    .bmi-stat { text-align:center; padding:0.75rem; background:var(--bg-light); border-radius:var(--radius-sm); }
+    .bmi-stat-label { font-size:0.7rem; color:var(--text-medium); font-weight:600; text-transform:uppercase; display:block; margin-bottom:0.25rem; }
+    .bmi-stat-value { font-size:1.1rem; font-weight:700; }
+    .bmi-advice { padding:1rem; background:var(--bg-light); border-radius:var(--radius-sm); }
+    .bmi-advice-title { display:flex; align-items:center; gap:0.4rem; font-weight:700; color:var(--primary); margin-bottom:0.5rem; font-size:0.9rem; }
+    .bmi-advice p { font-size:0.875rem; color:var(--text-dark); line-height:1.6; }
+    .bmi-history-card { background:var(--bg-white); border-radius:var(--radius); padding:1.5rem; box-shadow:var(--shadow); margin-bottom:2rem; }
+    .bmi-history-card h2 { font-size:1rem; color:var(--primary); margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem; }
+    .history-row { display:flex; align-items:center; gap:0.75rem; padding:0.75rem 0; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+    .history-row:last-child { border-bottom:none; }
+    .history-date { display:flex; align-items:center; gap:0.3rem; font-size:0.82rem; color:var(--text-medium); flex:1; }
+    .history-bmi { font-size:1.1rem; font-weight:700; color:var(--primary); }
+    .history-badge { padding:0.15rem 0.6rem; border-radius:10px; color:#fff; font-size:0.72rem; font-weight:600; }
+    .history-weight { font-size:0.82rem; color:var(--text-medium); }
+    .empty-history { text-align:center; padding:2rem; color:var(--text-medium); font-size:0.9rem; }
+    .bmi-trend-chart { margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border); }
+    .chart-title { display:flex; align-items:center; gap:0.4rem; font-size:0.875rem; font-weight:700; color:var(--primary); margin-bottom:0.5rem; }
+    .icon { display:inline-block; vertical-align:middle; }
+    @media (min-width:768px) { .bmi-body { padding:2rem; } }
+  </style>
+</head>
+<body class="bmi-page">
+
+<header class="page-header">
+  <a href="dashboard.html" class="btn-back-nav" id="back-btn"></a>
+  <h1>BMI Calculator</h1>
+</header>
+
+<main class="bmi-body">
+
+  <div class="bmi-form-card">
+    <h2 id="form-title"></h2>
+
+    <div class="unit-toggle-group">
+      <button class="unit-toggle active" data-unit="metric">Metric (kg/cm)</button>
+      <button class="unit-toggle" data-unit="imperial">Imperial (lbs/ft)</button>
+    </div>
+
+    <form id="bmi-form">
+      <div id="metric-fields">
+        <div class="input-row">
+          <div class="form-group">
+            <label for="weight-kg">Weight (kg)</label>
+            <input type="number" id="weight-kg" class="input-field" placeholder="e.g. 65" min="10" max="300" step="0.1">
+          </div>
+          <div class="form-group">
+            <label for="height-cm">Height (cm)</label>
+            <input type="number" id="height-cm" class="input-field" placeholder="e.g. 165" min="50" max="250">
+          </div>
+        </div>
+      </div>
+
+      <div id="imperial-fields" class="hidden">
+        <div class="input-row">
+          <div class="form-group">
+            <label for="weight-lbs">Weight (lbs)</label>
+            <input type="number" id="weight-lbs" class="input-field" placeholder="e.g. 143" min="20" max="660">
+          </div>
+          <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+            <div>
+              <label for="height-ft">Feet</label>
+              <input type="number" id="height-ft" class="input-field" placeholder="5" min="1" max="8">
+            </div>
+            <div>
+              <label for="height-in">Inches</label>
+              <input type="number" id="height-in" class="input-field" placeholder="5" min="0" max="11">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-green btn-full" id="btn-calculate"></button>
+    </form>
+  </div>
+
+  <!-- Result shown here -->
+  <div id="bmi-result" class="hidden"></div>
+
+  <!-- History -->
+  <div class="bmi-history-card">
+    <h2 id="history-title"></h2>
+    <div id="bmi-history"><div class="loading-spinner"><div class="spinner"></div></div></div>
+  </div>
+
+</main>
+
+<script type="module">
+  import { initBMIPage } from "./js/bmi-calculator.js";
+  import { icon } from "./js/icons.js";
+
+  document.getElementById("back-btn").innerHTML = icon("arrowLeft", 22);
+  document.getElementById("form-title").innerHTML = icon("bmi", 20) + " Calculate Your BMI";
+  document.getElementById("btn-calculate").innerHTML = icon("bmi", 18) + " Calculate BMI";
+  document.getElementById("history-title").innerHTML = icon("calendar", 20) + " BMI History";
+
+  initBMIPage();
+</script>
+</body>
+</html>

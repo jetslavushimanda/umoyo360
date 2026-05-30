@@ -310,7 +310,7 @@ export function renderPlanDisplay(plan) {
       <h3>Plan Summary</h3>
       <p>This ${plan.planDuration}-day plan is personalized for <strong>${plan.conditionName}</strong>.</p>
       <p>Every meal uses real Zambian foods available at your local market.</p>
-      <a href="clinic-finder.html" class="btn-primary">Find a Clinic Near You</a>
+      <a href="health-tracker.html" class="btn-primary">Track Your Progress</a>
     </div>`;
   document.getElementById("btn-new-plan")?.addEventListener("click", () => { container.classList.add("hidden"); window.scrollTo({top:0,behavior:"smooth"}); });
   container.querySelector(".day-card")?.classList.add("expanded");
