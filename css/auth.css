@@ -1,3 +1,4 @@
+/* ── Hero / Landing ────────────────────────────────────────────────────── */
 .hero {
   min-height: 100vh;
   background: linear-gradient(160deg, #1A5276 0%, #0E3460 60%, #1E8449 100%);
@@ -5,7 +6,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
+  padding: 2rem 1.25rem;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -17,113 +18,48 @@
   background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
-.logo-text {
-  font-size: 3.5rem;
-  font-weight: 900;
-  color: #fff;
-  letter-spacing: -0.02em;
-  position: relative;
-}
-.logo-tagline { font-size: 1.2rem; color: rgba(255,255,255,0.9); font-weight: 600; margin: 0.5rem 0 0.25rem; }
-.logo-subtitle { font-size: 0.95rem; color: rgba(255,255,255,0.7); margin-bottom: 2.5rem; }
+.logo-text { font-size: clamp(2.5rem, 10vw, 4rem); font-weight: 900; color: #fff; letter-spacing: -0.02em; position: relative; }
+.logo-tagline { font-size: clamp(1rem, 4vw, 1.25rem); color: rgba(255,255,255,0.9); font-weight: 600; margin: 0.5rem 0 0.25rem; }
+.logo-subtitle { font-size: clamp(0.85rem, 3vw, 1rem); color: rgba(255,255,255,0.7); margin-bottom: 2.5rem; }
 
-.hero-buttons {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  justify-content: center;
-  position: relative;
-}
-.hero-buttons .btn-primary {
-  background: #fff;
-  color: var(--primary);
-  font-size: 1.1rem;
-  padding: 0.875rem 2.5rem;
-}
+.hero-buttons { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; position: relative; }
+.hero-buttons .btn-primary { background: #fff; color: var(--primary); font-size: clamp(0.95rem, 3vw, 1.1rem); padding: 0.875rem 2.5rem; }
 .hero-buttons .btn-primary:hover { background: #EBF5FB; }
-.hero-buttons .btn-secondary {
-  border-color: rgba(255,255,255,0.6);
-  color: #fff;
-  font-size: 1.1rem;
-  padding: 0.875rem 2.5rem;
-}
+.hero-buttons .btn-secondary { border-color: rgba(255,255,255,0.6); color: #fff; font-size: clamp(0.95rem, 3vw, 1.1rem); padding: 0.875rem 2.5rem; }
 .hero-buttons .btn-secondary:hover { background: rgba(255,255,255,0.15); }
 
-.hero-footer {
-  position: absolute;
-  bottom: 1.5rem;
-  font-size: 0.8rem;
-  color: rgba(255,255,255,0.5);
-  display: flex;
-  gap: 1.5rem;
-}
+.hero-footer { position: absolute; bottom: 1.5rem; font-size: 0.78rem; color: rgba(255,255,255,0.5); display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; padding: 0 1rem; }
 
-/* ── Auth forms ────────────────────────────────────────────────────────── */
-.auth-page {
-  min-height: 100vh;
-  background: linear-gradient(160deg, #1A5276 0%, #0E3460 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-}
-.auth-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 2.5rem 2rem;
-  width: 100%;
-  max-width: 420px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-}
+/* ── Auth page ─────────────────────────────────────────────────────────── */
+.auth-page { min-height: 100vh; background: linear-gradient(160deg, #1A5276 0%, #0E3460 100%); display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+.auth-card { background: #fff; border-radius: 16px; padding: 2rem 1.75rem; width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
 .auth-logo { font-size: 1.75rem; font-weight: 900; color: var(--primary); margin-bottom: 0.25rem; }
-.auth-subtitle { color: var(--text-medium); font-size: 0.9rem; margin-bottom: 2rem; }
-.auth-card h2 { font-size: 1.4rem; color: var(--primary); margin-bottom: 1.5rem; }
-
-.auth-error {
-  padding: 0.75rem 1rem;
-  background: #FDEDEC;
-  border-left: 4px solid var(--accent-red);
-  border-radius: var(--radius-sm);
-  color: var(--accent-red);
-  font-size: 0.9rem;
-  margin-bottom: 1rem;
-  min-height: 1px;
-}
-.auth-success {
-  padding: 0.75rem 1rem;
-  background: #F0FFF4;
-  border-left: 4px solid var(--accent-green);
-  border-radius: var(--radius-sm);
-  color: var(--accent-green);
-  font-size: 0.9rem;
-  margin-bottom: 1rem;
-}
+.auth-subtitle { color: var(--text-medium); font-size: 0.875rem; margin-bottom: 1.75rem; }
+.auth-card h2 { font-size: 1.35rem; color: var(--primary); margin-bottom: 1.5rem; }
 
 .auth-link { color: var(--secondary); font-weight: 600; cursor: pointer; }
 .auth-link:hover { text-decoration: underline; }
-.auth-footer { margin-top: 1.5rem; text-align: center; font-size: 0.9rem; color: var(--text-medium); }
-
+.auth-footer { margin-top: 1.25rem; text-align: center; font-size: 0.875rem; color: var(--text-medium); }
 .btn-full { width: 100%; margin-top: 0.5rem; }
 
-/* ── Multi-step register ───────────────────────────────────────────────── */
-.register-page {
-  min-height: 100vh;
-  background: var(--bg-light);
-}
-.register-header {
-  background: var(--primary);
-  color: #fff;
-  padding: 1rem 1.5rem;
-  text-align: center;
-}
-.register-header h1 { font-size: 1.3rem; }
-.step-form { display: none; padding: 1.5rem; max-width: 600px; margin: 0 auto; }
+/* ── Register multi-step ───────────────────────────────────────────────── */
+.register-page { min-height: 100vh; background: var(--bg-light); }
+.register-header { background: var(--primary); color: #fff; padding: 1rem 1.5rem; text-align: center; }
+.register-header h1 { font-size: clamp(1rem, 4vw, 1.3rem); }
+.step-form { display: none; padding: 1.25rem; max-width: 600px; margin: 0 auto; }
 .step-form.active { display: block; }
-.step-form h2 { font-size: 1.2rem; color: var(--primary); margin-bottom: 1.5rem; }
-.step-nav {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-  margin-top: 1.5rem;
-  padding-bottom: 2rem;
+.step-form h2 { font-size: 1.1rem; color: var(--primary); margin-bottom: 1.5rem; }
+.step-nav { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; padding-bottom: 2rem; flex-wrap: wrap; }
+.step-nav .btn-primary, .step-nav .btn-secondary, .step-nav .btn-green { flex: 1; max-width: 180px; }
+
+/* ── Mobile ────────────────────────────────────────────────────────────── */
+@media (max-width: 400px) {
+  .auth-card { padding: 1.5rem 1.25rem; }
+  .hero-buttons { flex-direction: column; align-items: center; width: 100%; }
+  .hero-buttons .btn-primary, .hero-buttons .btn-secondary { width: 100%; max-width: 280px; }
+}
+
+/* ── Desktop ───────────────────────────────────────────────────────────── */
+@media (min-width: 768px) {
+  .step-form { padding: 2rem; }
 }

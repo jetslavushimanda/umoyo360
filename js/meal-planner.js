@@ -284,7 +284,10 @@ export function renderPlanDisplay(plan) {
       <h2>${plan.planDuration}-Day Meal Plan</h2>
       <p class="plan-meta">Personalized for: <strong>${plan.conditionName}</strong></p>
       <p class="plan-meta">Generated: ${formatDateShort(plan.generatedAt)}</p>
-      <button class="btn-secondary" id="btn-new-plan" style="margin-top:0.75rem;">Generate New Plan</button>
+      <div class="plan-header-btns">
+        <button class="btn-secondary" id="btn-new-plan">Generate New Plan</button>
+        <button class="btn-green" id="btn-download-pdf">⬇ Download PDF</button>
+      </div>
     </div>
     <div class="days-container">
       ${plan.days.map(day=>`
@@ -311,8 +314,80 @@ export function renderPlanDisplay(plan) {
     </div>`;
   document.getElementById("btn-new-plan")?.addEventListener("click", () => { container.classList.add("hidden"); window.scrollTo({top:0,behavior:"smooth"}); });
   container.querySelector(".day-card")?.classList.add("expanded");
+  document.getElementById("btn-download-pdf")?.addEventListener("click", () => downloadPlanAsPDF(plan));
 }
 
 async function savePlanToFirestore(plan) {
   await addDoc(collection(db, "mealPlans"), { userId: currentUser.uid, plan, conditionId: plan.conditionId, planDuration: plan.planDuration, createdAt: serverTimestamp() });
+}
+
+function downloadPlanAsPDF(plan) {
+  const btn = document.getElementById("btn-download-pdf");
+  btn.textContent = "Preparing PDF...";
+  btn.disabled = true;
+
+  const mealIcons = {breakfast:"☀️",morning_snack:"🍎",lunch:"🍽️",afternoon_snack:"🌤️",supper:"🌙"};
+  const mealLabels = {breakfast:"Breakfast",morning_snack:"Morning Snack",lunch:"Lunch",afternoon_snack:"Afternoon Snack",supper:"Supper"};
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;padding:20px;color:#1C2833;max-width:700px;margin:0 auto;">
+      <div style="background:#1A5276;color:white;padding:24px;border-radius:12px;text-align:center;margin-bottom:24px;">
+        <h1 style="margin:0;font-size:28px;letter-spacing:-0.5px;">UMOYO360</h1>
+        <p style="margin:6px 0 0;opacity:0.9;font-size:14px;">Your Complete Health Guardian</p>
+      </div>
+
+      <div style="background:#f4f6f7;border-radius:10px;padding:16px;margin-bottom:24px;text-align:center;">
+        <h2 style="margin:0 0 6px;color:#1A5276;">${plan.planDuration}-Day Personalized Meal Plan</h2>
+        <p style="margin:0;color:#566573;font-size:14px;">Condition: <strong>${plan.conditionName}</strong> &nbsp;|&nbsp; Generated: ${formatDateShort(plan.generatedAt)}</p>
+      </div>
+
+      ${plan.days.map(day => `
+        <div style="margin-bottom:20px;border:1px solid #D5D8DC;border-radius:10px;overflow:hidden;page-break-inside:avoid;">
+          <div style="background:#1A5276;color:white;padding:12px 16px;font-weight:700;font-size:16px;">
+            ${day.dayName}
+          </div>
+          <div style="padding:0;">
+            ${Object.entries(day.meals).map(([slot, meal]) => `
+              <div style="padding:12px 16px;border-bottom:1px solid #f0f0f0;">
+                <div style="font-weight:700;color:#1A5276;font-size:13px;margin-bottom:6px;">
+                  ${mealIcons[slot] || "🍴"} ${mealLabels[slot] || slot}
+                </div>
+                <ul style="margin:0;padding-left:16px;">
+                  ${meal.foods.map(f => `<li style="font-size:13px;padding:2px 0;color:#1C2833;">${f}</li>`).join("")}
+                </ul>
+                ${meal.note ? `<p style="margin:6px 0 0;font-size:12px;color:#566573;font-style:italic;">${meal.note}</p>` : ""}
+              </div>
+            `).join("")}
+            <div style="padding:10px 16px;background:#EBF5FB;font-size:12px;color:#1A5276;">
+              💡 ${day.nutritionNote}
+            </div>
+          </div>
+        </div>
+      `).join("")}
+
+      <div style="margin-top:24px;padding:16px;background:#F0FFF4;border:2px solid #1E8449;border-radius:10px;text-align:center;">
+        <p style="margin:0;color:#1E8449;font-weight:700;">Umoyo360 — Because your health is your greatest wealth.</p>
+        <p style="margin:6px 0 0;color:#566573;font-size:12px;">JETS National Innovation Challenge 2026 — Republic of Zambia</p>
+      </div>
+    </div>
+  `;
+
+  const element = document.createElement("div");
+  element.innerHTML = html;
+  document.body.appendChild(element);
+
+  const opt = {
+    margin: 10,
+    filename: `Umoyo360_MealPlan_${plan.planDuration}days.pdf`,
+    image: { type:"jpeg", quality:0.98 },
+    html2canvas: { scale:2, useCORS:true },
+    jsPDF: { unit:"mm", format:"a4", orientation:"portrait" }
+  };
+
+  html2pdf().set(opt).from(element).save().then(() => {
+    document.body.removeChild(element);
+    btn.textContent = "⬇ Download PDF";
+    btn.disabled = false;
+    showToast("PDF downloaded successfully!");
+  });
 }
