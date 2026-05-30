@@ -1,5 +1,5 @@
 import { auth, db } from "./firebase-config.js";
-import { collection, addDoc, getDocs, query, where, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { collection, addDoc, getDocs, query, where, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 import { requireAuth, loadUserProfile, showToast, getDayName, shuffleArray, formatDateShort } from "./utils.js";
 import { FOODS_DATABASE, getCategories, getFoodsByCategory } from "./foods-database.js";
 import { getConditionById, getMealStructure } from "./conditions.js";

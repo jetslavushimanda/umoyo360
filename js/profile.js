@@ -1,5 +1,5 @@
 import { auth, db } from "./firebase-config.js";
-import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 import { requireAuth, loadUserProfile, showToast, getInitials, formatDate, getConditionBadgeColor } from "./utils.js";
 import { getConditionById, CONDITION_NAMES } from "./conditions.js";
 import { populateProvinceDropdown, populateDistrictDropdown, getDistricts } from "./districts.js";

@@ -1,5 +1,5 @@
 import { db } from "./firebase-config.js";
-import { collection, query, where, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { collection, query, where, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 import { requireAuth, loadUserProfile, showLoading, showError } from "./utils.js";
 import { populateProvinceDropdown, populateDistrictDropdown, getDistricts } from "./districts.js";
 
