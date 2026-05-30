@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clinic Finder — Umoyo360</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/clinic-finder.css">
+</head>
+<body class="clinic-finder-page">
+
+<header class="page-header">
+  <a href="dashboard.html" class="btn-back-nav">←</a>
+  <h1>Clinic Finder</h1>
+</header>
+
+<div class="location-info">
+  <span id="location-display">Loading your location...</span>
+  <button class="btn-change-location" id="btn-change-location">Change Location</button>
+</div>
+
+<!-- Location selector panel (hidden by default) -->
+<div class="location-panel hidden" id="location-panel">
+  <div class="form-group" style="margin:0;">
+    <label for="search-province">Province</label>
+    <select id="search-province" class="input-field"></select>
+  </div>
+  <div class="form-group" style="margin:0;">
+    <label for="search-district">District</label>
+    <select id="search-district" class="input-field"></select>
+  </div>
+  <button class="btn-primary" id="btn-search-district">Search This District</button>
+</div>
+
+<!-- Filter buttons -->
+<div class="filter-bar">
+  <button class="filter-btn active" data-filter="all">All</button>
+  <button class="filter-btn" data-filter="health_post">Health Posts</button>
+  <button class="filter-btn" data-filter="health_centre">Health Centres</button>
+  <button class="filter-btn" data-filter="hospital">Hospitals</button>
+  <button class="filter-btn" data-filter="emergency">Emergency</button>
+</div>
+
+<!-- Results -->
+<div id="clinic-results">
+  <div class="loading-spinner"><div class="spinner"></div><p>Finding clinics...</p></div>
+</div>
+
+<script type="module">
+  import { initClinicFinderPage } from "./js/clinic-finder.js";
+  initClinicFinderPage();
+</script>
+</body>
+</html>

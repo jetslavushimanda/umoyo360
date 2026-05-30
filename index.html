@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Umoyo360 — Your Complete Health Guardian</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+
+<!-- ── Landing / Hero ──────────────────────────────────────────────────── -->
+<section class="hero" id="hero-section">
+  <div class="logo-text">UMOYO360</div>
+  <p class="logo-tagline">Your Complete Health Guardian</p>
+  <p class="logo-subtitle">Protecting Every Zambian Through Nutrition</p>
+  <div class="hero-buttons">
+    <button class="btn-primary" onclick="showLogin()">Login</button>
+    <a href="register.html" class="btn-secondary">Register</a>
+  </div>
+  <div class="hero-footer">
+    <span>Built for Zambia</span>
+    <span>All 10 Provinces</span>
+    <span>20 Health Conditions</span>
+  </div>
+</section>
+
+<!-- ── Login panel ─────────────────────────────────────────────────────── -->
+<section class="auth-page hidden" id="login-section">
+  <div class="auth-card">
+    <div class="auth-logo">UMOYO360</div>
+    <p class="auth-subtitle">Your Complete Health Guardian</p>
+    <h2>Login to Your Account</h2>
+
+    <div class="auth-error" id="login-error"></div>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label for="login-email">Email Address</label>
+        <input type="email" id="login-email" class="input-field" placeholder="Enter your email" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" class="input-field" placeholder="Enter your password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn-green btn-full" id="btn-login">Login</button>
+    </form>
+
+    <div class="auth-footer">
+      <a href="#" id="forgot-password" class="auth-link">Forgot password?</a>
+      &nbsp;·&nbsp;
+      <a href="register.html" class="auth-link">Create account</a>
+      &nbsp;·&nbsp;
+      <a href="#" onclick="showHero()" class="auth-link">Back</a>
+    </div>
+  </div>
+</section>
+
+<script type="module">
+  import { initLoginPage } from "./js/auth.js";
+  initLoginPage();
+
+  window.showLogin = () => {
+    document.getElementById("hero-section").classList.add("hidden");
+    document.getElementById("login-section").classList.remove("hidden");
+  };
+  window.showHero = () => {
+    document.getElementById("login-section").classList.add("hidden");
+    document.getElementById("hero-section").classList.remove("hidden");
+  };
+</script>
+</body>
+</html>

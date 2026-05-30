@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Health Education — Umoyo360</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/education.css">
+</head>
+<body class="education-page">
+
+<header class="page-header">
+  <a href="dashboard.html" class="btn-back-nav">←</a>
+  <h1>Health Education</h1>
+</header>
+
+<section id="condition-grid-section">
+  <p class="education-intro">
+    Learn about diet-related conditions and how to prevent them through proper nutrition.
+    Knowledge is your first medicine.
+  </p>
+  <div class="condition-grid" id="condition-grid">
+    <div class="loading-spinner"><div class="spinner"></div><p>Loading...</p></div>
+  </div>
+</section>
+
+<!-- Condition detail (hidden until selected) -->
+<section id="condition-detail" class="hidden"></section>
+
+<script type="module">
+  import { initEducationPage } from "./js/education.js";
+  initEducationPage();
+</script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile — Umoyo360</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .profile-page { min-height: 100vh; background: var(--bg-light); }
+    .profile-avatar {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: var(--primary); color: #fff;
+      font-size: 1.75rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1rem;
+    }
+    .profile-summary { text-align: center; padding: 2rem 1.5rem; background: var(--bg-white); border-bottom: 1px solid var(--border); }
+    .profile-summary h2 { font-size: 1.3rem; }
+    .profile-summary p { color: var(--text-medium); font-size: 0.875rem; }
+    .profile-section { background: var(--bg-white); margin: 0.75rem; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+    .profile-section-title { padding: 0.875rem 1.25rem; background: var(--bg-light); font-weight: 700; font-size: 0.875rem; color: var(--text-medium); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+    .profile-row { display: flex; justify-content: space-between; padding: 0.875rem 1.25rem; border-bottom: 1px solid var(--border); gap: 1rem; }
+    .profile-row:last-child { border-bottom: none; }
+    .profile-label { font-weight: 600; color: var(--text-medium); font-size: 0.875rem; flex-shrink: 0; }
+    .profile-value { color: var(--text-dark); font-size: 0.9rem; text-align: right; }
+    .profile-actions { padding: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .edit-section { display: none; padding: 1.25rem; }
+    .edit-section.active { display: block; }
+    .edit-actions { display: flex; gap: 0.75rem; margin-top: 1rem; }
+  </style>
+</head>
+<body class="profile-page">
+
+<header class="page-header">
+  <a href="dashboard.html" class="btn-back-nav">←</a>
+  <h1>My Profile</h1>
+  <button class="btn-secondary" id="btn-edit-profile" style="padding:0.4rem 0.875rem;font-size:0.8rem;margin-left:auto;">Edit</button>
+</header>
+
+<!-- Profile summary -->
+<div class="profile-summary">
+  <div class="profile-avatar" id="avatar-initials">U</div>
+  <h2 id="profile-name">Loading...</h2>
+  <p id="profile-email"></p>
+  <p style="margin-top:0.25rem;">Member since: <span id="profile-since"></span></p>
+  <span class="badge badge-condition" id="condition-badge" style="margin-top:0.5rem;display:inline-block;"></span>
+</div>
+
+<!-- View mode -->
+<div id="view-mode">
+  <div class="profile-section">
+    <div class="profile-section-title">Personal Information</div>
+    <div class="profile-row"><span class="profile-label">Full Name</span><span class="profile-value" id="field-fullname">—</span></div>
+    <div class="profile-row"><span class="profile-label">Date of Birth</span><span class="profile-value" id="field-dob">—</span></div>
+    <div class="profile-row"><span class="profile-label">Sex</span><span class="profile-value" id="field-sex">—</span></div>
+    <div class="profile-row"><span class="profile-label">Email</span><span class="profile-value" id="field-email">—</span></div>
+  </div>
+
+  <div class="profile-section">
+    <div class="profile-section-title">Location</div>
+    <div class="profile-row"><span class="profile-label">Province</span><span class="profile-value" id="field-province">—</span></div>
+    <div class="profile-row"><span class="profile-label">District</span><span class="profile-value" id="field-district">—</span></div>
+    <div class="profile-row"><span class="profile-label">Town / Area</span><span class="profile-value" id="field-town">—</span></div>
+  </div>
+
+  <div class="profile-section">
+    <div class="profile-section-title">Health Information</div>
+    <div class="profile-row"><span class="profile-label">Condition</span><span class="profile-value" id="field-condition">—</span></div>
+    <div class="profile-row"><span class="profile-label">Meals Per Day</span><span class="profile-value" id="field-meals-per-day">—</span></div>
+    <div class="profile-row"><span class="profile-label">Family Size</span><span class="profile-value" id="field-family-size">—</span></div>
+    <div class="profile-row"><span class="profile-label">Food Allergies</span><span class="profile-value" id="field-allergies">—</span></div>
+  </div>
+
+  <div class="profile-section">
+    <div class="profile-section-title">About Your Condition</div>
+    <div style="padding:1rem 1.25rem;color:var(--text-medium);font-size:0.9rem;line-height:1.6;" id="field-condition-desc">—</div>
+  </div>
+
+  <div class="profile-actions">
+    <button class="btn-secondary" id="btn-change-password">Change Password</button>
+    <button class="btn-danger" id="btn-logout">Logout</button>
+  </div>
+</div>
+
+<!-- Edit mode -->
+<div id="edit-mode" class="hidden">
+  <div class="profile-section">
+    <div class="profile-section-title">Edit Personal Information</div>
+    <div style="padding:1.25rem;">
+      <div class="form-group"><label>Full Name</label><input type="text" id="edit-fullname" class="input-field"></div>
+      <div class="form-group"><label>Sex</label>
+        <select id="edit-sex" class="input-field">
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="profile-section">
+    <div class="profile-section-title">Edit Location</div>
+    <div style="padding:1.25rem;">
+      <div class="form-group"><label>Province</label><select id="edit-province" class="input-field"></select></div>
+      <div class="form-group"><label>District</label><select id="edit-district" class="input-field"></select></div>
+      <div class="form-group"><label>Town / Area</label><input type="text" id="edit-town" class="input-field"></div>
+    </div>
+  </div>
+
+  <div class="profile-section">
+    <div class="profile-section-title">Edit Health Information</div>
+    <div style="padding:1.25rem;">
+      <div class="form-group"><label>Health Condition</label><select id="edit-condition" class="input-field"></select></div>
+      <div class="form-group"><label>Family Size</label><input type="number" id="edit-family-size" class="input-field" min="1" max="15"></div>
+      <div class="form-group"><label>Food Allergies</label><textarea id="edit-allergies" class="input-field" rows="2"></textarea></div>
+    </div>
+  </div>
+
+  <div class="profile-actions">
+    <button class="btn-green" id="btn-save-profile">Save Changes</button>
+    <button class="btn-secondary" id="btn-cancel-edit">Cancel</button>
+  </div>
+</div>
+
+<script type="module">
+  import { initProfilePage } from "./js/profile.js";
+  initProfilePage();
+</script>
+</body>
+</html>

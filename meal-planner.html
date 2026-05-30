@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meal Planner — Umoyo360</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/meal-planner.css">
+</head>
+<body class="meal-planner-page">
+
+<header class="page-header">
+  <a href="dashboard.html" class="btn-back-nav">←</a>
+  <h1>Meal Planner</h1>
+</header>
+
+<div class="planner-controls">
+  <span class="condition-badge-sm" id="condition-badge">Loading...</span>
+  <div class="plan-toggle-group" style="margin-left:auto;">
+    <button class="plan-toggle active" data-days="7">7 Days</button>
+    <button class="plan-toggle" data-days="30">30 Days</button>
+  </div>
+</div>
+
+<!-- Food selector section -->
+<div class="food-selector-section" id="food-selector-section">
+  <div class="food-selector-header">
+    <h2>Select foods you have available</h2>
+  </div>
+
+  <!-- Category tabs (rendered by JS) -->
+  <div class="tab-bar" id="category-tabs"></div>
+
+  <!-- Search -->
+  <div class="search-wrapper">
+    <input type="search" id="food-search" class="search-bar" placeholder="Search foods...">
+  </div>
+
+  <!-- Actions bar -->
+  <div style="display:flex;gap:0.5rem;padding:0.5rem 1rem;background:#fff;border-bottom:1px solid var(--border);">
+    <button id="btn-select-safe" class="btn-secondary" style="font-size:0.8rem;padding:0.4rem 0.875rem;">✅ Select All Safe</button>
+    <button id="btn-clear-all" class="btn-secondary" style="font-size:0.8rem;padding:0.4rem 0.875rem;">✕ Clear All</button>
+  </div>
+
+  <!-- Food grid (rendered by JS) -->
+  <div class="food-grid" id="food-grid">
+    <div class="loading-spinner"><div class="spinner"></div><p>Loading foods...</p></div>
+  </div>
+
+  <!-- Food selector container for general users -->
+  <div id="food-selector"></div>
+</div>
+
+<!-- Floating generate bar -->
+<div class="floating-bar">
+  <span id="selection-counter">0 foods selected</span>
+  <button class="btn-green" id="btn-generate" disabled>Generate My Meal Plan</button>
+</div>
+
+<!-- Plan display (hidden until generated) -->
+<div id="plan-display" class="hidden"></div>
+
+<script type="module">
+  import { initMealPlannerPage } from "./js/meal-planner.js";
+  initMealPlannerPage();
+</script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Umoyo360</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body class="dashboard-page">
+
+<header class="dashboard-header">
+  <span class="dashboard-logo">UMOYO360</span>
+  <div class="dashboard-user">
+    <div class="user-greeting">
+      Welcome, <strong id="user-name">...</strong>
+    </div>
+    <span class="location-badge" id="location-badge">Loading...</span>
+    <span class="badge badge-condition" id="condition-badge">...</span>
+    <button class="btn-danger" id="btn-logout" style="padding:0.4rem 1rem;font-size:0.8rem;">Logout</button>
+  </div>
+</header>
+
+<main class="dashboard-body">
+  <div class="module-grid">
+    <a href="meal-planner.html" class="module-card">
+      <div class="module-icon">🍽️</div>
+      <h3>Meal Planner</h3>
+      <p class="module-desc">Get your personalized nutrition plan using foods you have at home.</p>
+      <span class="module-cta">Open Planner →</span>
+    </a>
+    <a href="education.html" class="module-card">
+      <div class="module-icon">📖</div>
+      <h3>Health Education</h3>
+      <p class="module-desc">Learn about your condition and how to prevent disease through nutrition.</p>
+      <span class="module-cta">Learn Now →</span>
+    </a>
+    <a href="clinic-finder.html" class="module-card">
+      <div class="module-icon">🏥</div>
+      <h3>Clinic Finder</h3>
+      <p class="module-desc">Find health facilities near you across all 10 provinces.</p>
+      <span class="module-cta">Find Clinic →</span>
+    </a>
+    <a href="profile.html" class="module-card">
+      <div class="module-icon">👤</div>
+      <h3>My Profile</h3>
+      <p class="module-desc">View and update your health profile and account settings.</p>
+      <span class="module-cta">View Profile →</span>
+    </a>
+  </div>
+
+  <div class="stats-section">
+    <h2>Quick Overview</h2>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-label">Your Condition</div>
+        <div class="stat-value" id="stat-condition">Loading...</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Location</div>
+        <div class="stat-value" id="stat-location">Loading...</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Last Meal Plan</div>
+        <div class="stat-value" id="stat-last-plan">None yet</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Member Since</div>
+        <div class="stat-value" id="stat-since">...</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+  import { requireAuth, loadUserProfile, formatDate, getConditionBadgeColor } from "./js/utils.js";
+  import { getConditionById } from "./js/conditions.js";
+  import { logoutUser } from "./js/auth.js";
+  import { db } from "./js/firebase-config.js";
+  import { collection, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  (async () => {
+    try {
+      const user = await requireAuth();
+      const profile = await loadUserProfile(user.uid);
+      if (!profile) return;
+
+      const condition = getConditionById(profile.condition);
+
+      document.getElementById("user-name").textContent = profile.fullName?.split(" ")[0] || "User";
+      document.getElementById("location-badge").textContent = `${profile.district}, ${profile.province}`;
+      document.getElementById("condition-badge").textContent = condition?.shortName || "Healthy";
+      document.getElementById("condition-badge").style.background = getConditionBadgeColor(profile.condition);
+
+      document.getElementById("stat-condition").textContent = condition?.name || "General Healthy Eating";
+      document.getElementById("stat-location").textContent = `${profile.district}, ${profile.province}`;
+      document.getElementById("stat-since").textContent = formatDate(profile.createdAt);
+
+      // Last plan
+      try {
+        const q = query(collection(db,"mealPlans"), where("userId","==",user.uid), orderBy("createdAt","desc"), limit(1));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const last = snap.docs[0].data();
+          document.getElementById("stat-last-plan").textContent = formatDate(last.createdAt);
+        }
+      } catch { /* no plans yet */ }
+
+      document.getElementById("btn-logout").addEventListener("click", () => {
+        if (confirm("Logout?")) logoutUser();
+      });
+    } catch { /* redirected */ }
+  })();
+</script>
+</body>
+</html>

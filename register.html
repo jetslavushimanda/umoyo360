@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register — Umoyo360</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body class="register-page">
+
+<div class="register-header">
+  <h1>UMOYO360 — Create Your Account</h1>
+</div>
+
+<!-- Progress indicator -->
+<div class="progress-steps" id="progress">
+  <div class="step active" id="step-ind-1">
+    <div class="step-circle">1</div>
+    <span class="step-label">Personal</span>
+  </div>
+  <div class="step-connector"></div>
+  <div class="step" id="step-ind-2">
+    <div class="step-circle">2</div>
+    <span class="step-label">Location</span>
+  </div>
+  <div class="step-connector"></div>
+  <div class="step" id="step-ind-3">
+    <div class="step-circle">3</div>
+    <span class="step-label">Health</span>
+  </div>
+</div>
+
+<div class="auth-error" id="register-error" style="margin:0 1rem;"></div>
+
+<!-- Step 1: Personal -->
+<div class="step-form active" id="step-1">
+  <h2>Step 1 — Personal Information</h2>
+  <div class="form-group">
+    <label for="fullName">Full Name *</label>
+    <input type="text" id="fullName" class="input-field" placeholder="Enter your full name" required>
+  </div>
+  <div class="form-group">
+    <label for="email">Email Address *</label>
+    <input type="email" id="email" class="input-field" placeholder="Enter your email" required autocomplete="email">
+  </div>
+  <div class="form-group">
+    <label for="password">Password * (minimum 8 characters)</label>
+    <input type="password" id="password" class="input-field" placeholder="Create a password" minlength="8" required>
+  </div>
+  <div class="form-group">
+    <label for="confirmPassword">Confirm Password *</label>
+    <input type="password" id="confirmPassword" class="input-field" placeholder="Repeat your password" required>
+  </div>
+  <div class="form-group">
+    <label for="dob">Date of Birth *</label>
+    <input type="date" id="dob" class="input-field" required>
+  </div>
+  <div class="form-group">
+    <label for="sex">Sex *</label>
+    <select id="sex" class="input-field" required>
+      <option value="">-- Select --</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+    </select>
+  </div>
+  <div class="step-nav">
+    <a href="index.html" class="btn-secondary">Back to Login</a>
+    <button class="btn-primary" id="next-1">Next →</button>
+  </div>
+</div>
+
+<!-- Step 2: Location -->
+<div class="step-form" id="step-2">
+  <h2>Step 2 — Your Location</h2>
+  <div class="form-group">
+    <label for="province">Province *</label>
+    <select id="province" class="input-field" required></select>
+  </div>
+  <div class="form-group">
+    <label for="district">District *</label>
+    <select id="district" class="input-field" required>
+      <option value="">-- Select Province first --</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label for="town">Nearest Town / Area (optional)</label>
+    <input type="text" id="town" class="input-field" placeholder="e.g. Kanyama, Chelstone">
+  </div>
+  <div class="step-nav">
+    <button class="btn-secondary" id="back-2">← Back</button>
+    <button class="btn-primary" id="next-2">Next →</button>
+  </div>
+</div>
+
+<!-- Step 3: Health -->
+<div class="step-form" id="step-3">
+  <h2>Step 3 — Health Profile</h2>
+  <div class="form-group">
+    <label for="condition">Health Condition *</label>
+    <select id="condition" class="input-field" required></select>
+  </div>
+  <div id="condition-note" class="auth-success hidden"></div>
+
+  <div class="form-group">
+    <label for="familySize">Family Size (number of people you cook for)</label>
+    <input type="number" id="familySize" class="input-field" min="1" max="15" value="1">
+  </div>
+  <div class="form-group">
+    <label for="allergies">Known Food Allergies (optional)</label>
+    <textarea id="allergies" class="input-field" rows="2" placeholder="e.g. peanut allergy, lactose intolerant"></textarea>
+  </div>
+  <div class="step-nav">
+    <button class="btn-secondary" id="back-3">← Back</button>
+    <button class="btn-green" id="btn-register">Create My Account</button>
+  </div>
+</div>
+
+<script type="module">
+  import { registerUser, getAuthErrorMessage } from "./js/auth.js";
+  import { populateProvinceDropdown, populateDistrictDropdown } from "./js/districts.js";
+  import { CONDITION_NAMES } from "./js/conditions.js";
+
+  const errorEl = document.getElementById("register-error");
+
+  function showStep(n) {
+    document.querySelectorAll(".step-form").forEach(f => f.classList.remove("active"));
+    document.getElementById(`step-${n}`).classList.add("active");
+    for (let i = 1; i <= 3; i++) {
+      const ind = document.getElementById(`step-ind-${i}`);
+      ind.classList.remove("active","completed");
+      if (i < n) ind.classList.add("completed");
+      else if (i === n) ind.classList.add("active");
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    errorEl.textContent = "";
+  }
+
+  // Province/district
+  const provinceEl = document.getElementById("province");
+  const districtEl = document.getElementById("district");
+  populateProvinceDropdown(provinceEl);
+  provinceEl.addEventListener("change", () => populateDistrictDropdown(districtEl, provinceEl.value));
+
+  // Conditions
+  const conditionEl = document.getElementById("condition");
+  const condNoteEl = document.getElementById("condition-note");
+  conditionEl.innerHTML = "";
+  CONDITION_NAMES.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.textContent = c.name;
+    conditionEl.appendChild(opt);
+  });
+  conditionEl.addEventListener("change", () => {
+    if (conditionEl.value === "general") {
+      condNoteEl.textContent = "Great! The meal planner will generate a balanced general nutrition plan for you.";
+      condNoteEl.classList.remove("hidden");
+    } else {
+      condNoteEl.textContent = "The meal planner will personalize your food recommendations for your condition.";
+      condNoteEl.classList.remove("hidden");
+    }
+  });
+
+  // Step navigation
+  document.getElementById("next-1").addEventListener("click", () => {
+    const fn = document.getElementById("fullName").value.trim();
+    const em = document.getElementById("email").value.trim();
+    const pw = document.getElementById("password").value;
+    const cpw = document.getElementById("confirmPassword").value;
+    const dob = document.getElementById("dob").value;
+    const sex = document.getElementById("sex").value;
+    if (!fn || !em || !pw || !cpw || !dob || !sex) { errorEl.textContent = "Please fill in all required fields."; return; }
+    if (pw.length < 8) { errorEl.textContent = "Password must be at least 8 characters."; return; }
+    if (pw !== cpw) { errorEl.textContent = "Passwords do not match."; return; }
+    showStep(2);
+  });
+
+  document.getElementById("back-2").addEventListener("click", () => showStep(1));
+  document.getElementById("next-2").addEventListener("click", () => {
+    if (!provinceEl.value || !districtEl.value) { errorEl.textContent = "Please select your province and district."; return; }
+    showStep(3);
+  });
+
+  document.getElementById("back-3").addEventListener("click", () => showStep(2));
+
+  document.getElementById("btn-register").addEventListener("click", async () => {
+    const btn = document.getElementById("btn-register");
+    btn.disabled = true;
+    btn.textContent = "Creating account...";
+    errorEl.textContent = "";
+
+    const profileData = {
+      fullName: document.getElementById("fullName").value.trim(),
+      dob: document.getElementById("dob").value,
+      sex: document.getElementById("sex").value,
+      province: provinceEl.value,
+      district: districtEl.value,
+      town: document.getElementById("town").value.trim(),
+      condition: document.getElementById("condition").value,
+      familySize: parseInt(document.getElementById("familySize").value, 10) || 1,
+      allergies: document.getElementById("allergies").value.trim()
+    };
+
+    try {
+      await registerUser(document.getElementById("email").value.trim(), document.getElementById("password").value, profileData);
+      window.location.href = "dashboard.html";
+    } catch (err) {
+      errorEl.textContent = getAuthErrorMessage(err.code);
+      btn.disabled = false;
+      btn.textContent = "Create My Account";
+    }
+  });
+</script>
+</body>
+</html>
