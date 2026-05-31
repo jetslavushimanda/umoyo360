@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0F4DA6">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Nutrition Quiz — Umoyo360</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .nq-page { min-height:100vh; background:var(--bg-light); }
+    .nq-body { padding:1rem; max-width:600px; margin:0 auto; }
+
+    .nq-start-card { background:var(--bg-white); border-radius:var(--radius); padding:2rem 1.5rem; box-shadow:var(--shadow-card); border:1px solid var(--border); text-align:center; margin-bottom:1.25rem; }
+    .nq-start-icon { color:var(--primary); margin-bottom:0.875rem; }
+    .nq-start-card h2 { font-size:1.25rem; font-weight:800; color:var(--text-dark); margin-bottom:0.5rem; }
+    .nq-start-card p { font-size:0.9rem; color:var(--text-medium); line-height:1.65; margin-bottom:1.25rem; }
+    .nq-stats-row { display:flex; justify-content:center; gap:1.5rem; margin-bottom:1.25rem; }
+    .nq-stat { text-align:center; }
+    .nq-stat-n { display:block; font-size:1.5rem; font-weight:900; color:var(--primary); }
+    .nq-stat-l { display:block; font-size:0.7rem; font-weight:600; color:var(--text-light); text-transform:uppercase; letter-spacing:0.05em; }
+    .nq-start-btn { width:100%; max-width:280px; display:inline-flex; align-items:center; justify-content:center; gap:0.4rem; }
+
+    .nq-progress-wrap { margin-bottom:0.875rem; }
+    .nq-progress-bar { height:8px; background:var(--border); border-radius:4px; overflow:hidden; margin-bottom:0.35rem; }
+    .nq-progress-fill { height:100%; background:linear-gradient(90deg,var(--primary),var(--secondary)); border-radius:4px; transition:width 0.4s ease; }
+    .nq-progress-label { font-size:0.75rem; color:var(--text-medium); font-weight:600; display:flex; justify-content:space-between; }
+
+    .nq-question-card { background:var(--bg-white); border-radius:var(--radius); padding:1.375rem; box-shadow:var(--shadow-card); border:1px solid var(--border); }
+    .nq-score-badge { font-size:0.78rem; font-weight:700; color:var(--text-light); margin-bottom:0.875rem; display:flex; align-items:center; gap:0.3rem; }
+    .nq-question-text { font-size:1rem; font-weight:700; color:var(--text-dark); margin-bottom:1.125rem; line-height:1.55; }
+    .nq-options { display:flex; flex-direction:column; gap:0.5rem; margin-bottom:0.875rem; }
+    .nq-option { padding:0.8rem 1rem; border:1.5px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-white); text-align:left; font-size:0.9rem; font-weight:500; cursor:pointer; transition:var(--transition); color:var(--text-dark); min-height:46px; font-family:inherit; }
+    .nq-option:hover:not(:disabled) { border-color:var(--primary); background:rgba(15,77,166,0.04); }
+    .nq-option:disabled { cursor:not-allowed; }
+    .nq-option.nq-correct { border-color:var(--accent-green); background:rgba(13,153,84,0.1); color:var(--accent-green); font-weight:700; }
+    .nq-option.nq-wrong   { border-color:var(--accent-red);   background:rgba(220,38,38,0.08); color:var(--accent-red); }
+
+    .nq-fact { background:rgba(15,77,166,0.06); border-left:3px solid var(--primary); border-radius:var(--radius-sm); padding:0.75rem 0.875rem; font-size:0.84rem; color:var(--text-dark); line-height:1.6; margin-bottom:0.875rem; }
+    .nq-next-btn { width:100%; }
+
+    .nq-result-card { background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:#fff; border-radius:var(--radius); padding:2rem 1.5rem; text-align:center; margin-bottom:1rem; }
+    .nq-result-circle { width:100px; height:100px; border-radius:50%; border:5px solid rgba(255,255,255,0.4); display:flex; flex-direction:column; align-items:center; justify-content:center; margin:0 auto 0.875rem; background:rgba(255,255,255,0.12); }
+    .nq-result-score { font-size:2.25rem; font-weight:900; line-height:1; }
+    .nq-result-total { font-size:0.9rem; opacity:0.75; }
+    .nq-result-grade { font-size:1.2rem; font-weight:800; margin-bottom:0.35rem; }
+    .nq-result-msg { font-size:0.88rem; opacity:0.88; }
+
+    .nq-review { background:var(--bg-white); border-radius:var(--radius); padding:1.25rem; box-shadow:var(--shadow-card); border:1px solid var(--border); margin-bottom:1rem; }
+    .nq-review h3 { font-size:0.95rem; font-weight:700; color:var(--primary); margin-bottom:0.875rem; display:flex; align-items:center; gap:0.4rem; }
+    .nq-review-item { display:flex; gap:0.625rem; padding:0.625rem 0; border-bottom:1px solid var(--border-soft); }
+    .nq-review-item:last-child { border-bottom:none; }
+    .nq-review-num { font-size:0.8rem; font-weight:700; color:var(--text-light); flex-shrink:0; min-width:18px; }
+    .nq-review-q { font-size:0.85rem; font-weight:600; color:var(--text-dark); margin-bottom:0.25rem; line-height:1.4; }
+    .nq-review-fact { font-size:0.78rem; color:var(--text-medium); line-height:1.5; display:flex; align-items:flex-start; gap:0.25rem; }
+
+    .nq-result-actions { display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:2rem; }
+    .nq-result-actions .btn-green, .nq-result-actions .btn-secondary { flex:1; display:flex; align-items:center; justify-content:center; gap:0.4rem; }
+
+    .nq-history-card { background:var(--bg-white); border-radius:var(--radius); padding:1.125rem; box-shadow:var(--shadow-card); border:1px solid var(--border); margin-bottom:2rem; }
+    .nq-history-card h2 { font-size:0.93rem; font-weight:700; color:var(--primary); margin-bottom:0.75rem; display:flex; align-items:center; gap:0.4rem; }
+    .nq-history-row { display:flex; align-items:center; gap:0.75rem; padding:0.5rem 0; border-bottom:1px solid var(--border-soft); }
+    .nq-history-row:last-child { border-bottom:none; }
+    .nq-hist-num  { font-size:0.75rem; color:var(--text-light); min-width:22px; }
+    .nq-hist-score { font-size:1rem; font-weight:800; }
+    .nq-hist-pct  { font-size:0.8rem; color:var(--text-medium); }
+    .nq-hist-date { font-size:0.72rem; color:var(--text-light); margin-left:auto; }
+    .nq-no-history { font-size:0.85rem; color:var(--text-light); text-align:center; padding:1rem; }
+
+    .icon { display:inline-block; vertical-align:middle; }
+    @media (min-width:768px) { .nq-body { padding:2rem; } }
+  </style>
+</head>
+<body class="nq-page">
+
+<header class="page-header">
+  <a href="dashboard.html" class="btn-back-nav" id="back-btn"></a>
+  <h1>Nutrition Quiz</h1>
+</header>
+
+<main class="nq-body">
+  <div id="quiz-container">
+    <div class="loading-spinner"><div class="spinner"></div></div>
+  </div>
+
+  <div class="nq-history-card">
+    <h2 id="lb-title" class="hidden"></h2>
+    <div id="leaderboard"><p class="nq-no-history">Take your first quiz to see your scores here.</p></div>
+  </div>
+</main>
+
+<script type="module">
+  import { initNutritionQuizPage } from "./js/nutrition-quiz.js";
+  import { icon } from "./js/icons.js";
+  document.getElementById("back-btn").innerHTML = icon("arrowLeft", 22);
+  document.getElementById("lb-title").innerHTML = icon("star",16) + " Your Recent Scores";
+  document.getElementById("lb-title").classList.remove("hidden");
+  initNutritionQuizPage();
+</script>
+</body>
+</html>

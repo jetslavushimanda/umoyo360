@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0F4DA6">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Child Growth Tracker — Umoyo360</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .cg-page { min-height:100vh; background:var(--bg-light); }
+    .cg-body { padding:1rem; max-width:680px; margin:0 auto; }
+
+    .cg-intro { background:var(--bg-white); border-radius:var(--radius); padding:1.125rem; box-shadow:var(--shadow-card); border:1px solid var(--border); margin-bottom:1.25rem; font-size:0.88rem; color:var(--text-medium); line-height:1.65; }
+
+    .cg-form-card { background:var(--bg-white); border-radius:var(--radius); padding:1.25rem; box-shadow:var(--shadow-card); border:1px solid var(--border); margin-bottom:1.25rem; }
+    .cg-form-card h2 { font-size:0.95rem; font-weight:700; color:var(--primary); margin-bottom:1rem; display:flex; align-items:center; gap:0.4rem; }
+    .cg-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.875rem; }
+    .cg-form-grid .form-group:first-child { grid-column:1/-1; }
+
+    .cg-result-header { background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:#fff; border-radius:var(--radius); padding:1.125rem; margin-bottom:0.875rem; }
+    .cg-result-header h2 { font-size:1rem; font-weight:700; display:flex; align-items:center; gap:0.4rem; }
+
+    .cg-assessment-card { background:var(--bg-white); border-radius:var(--radius); padding:1.125rem; box-shadow:var(--shadow-card); border:1px solid var(--border); border-top:4px solid; margin-bottom:0.75rem; }
+    .cg-assess-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.625rem; flex-wrap:wrap; gap:0.4rem; }
+    .cg-assess-label { font-size:0.82rem; font-weight:600; color:var(--text-medium); }
+    .cg-assess-status { font-size:0.95rem; font-weight:800; }
+    .cg-weight-ref { display:flex; justify-content:space-between; font-size:0.65rem; color:var(--text-light); margin-bottom:0.3rem; text-align:center; }
+    .cg-weight-ref span { flex:1; }
+    .cg-weight-bar { height:12px; background:linear-gradient(90deg,#C62828 0%,#E65100 25%,#0D9954 50%,#1565C0 85%,#E65100 100%); border-radius:6px; position:relative; margin-bottom:0.5rem; }
+    .cg-weight-marker { position:absolute; top:-4px; width:20px; height:20px; border-radius:50%; border:3px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,0.3); transform:translateX(-50%); }
+    .cg-assess-note { font-size:0.8rem; color:var(--text-medium); }
+
+    .cg-urgent-box { background:rgba(220,38,38,0.07); border:1.5px solid rgba(220,38,38,0.35); border-radius:var(--radius); padding:1rem; margin-bottom:0.875rem; display:flex; gap:0.625rem; align-items:flex-start; font-size:0.85rem; color:var(--text-dark); line-height:1.6; }
+
+    .cg-feeding-card { background:var(--bg-white); border-radius:var(--radius); padding:1.125rem; box-shadow:var(--shadow-card); border:1px solid var(--border); border-top:3px solid var(--accent-green); margin-bottom:1.5rem; }
+    .cg-feeding-card h3 { font-size:0.95rem; font-weight:700; color:var(--primary); margin-bottom:0.5rem; display:flex; align-items:center; gap:0.4rem; }
+    .cg-feeding-meta { display:flex; flex-direction:column; gap:0.25rem; margin-bottom:0.75rem; font-size:0.82rem; color:var(--text-medium); }
+    .cg-feeding-list { display:flex; flex-direction:column; gap:0.35rem; }
+    .cg-feeding-list li { font-size:0.85rem; color:var(--text-dark); padding-left:1rem; position:relative; line-height:1.5; }
+    .cg-feeding-list li::before { content:"•"; position:absolute; left:0; color:var(--accent-green); }
+
+    .cg-history-card { background:var(--bg-white); border-radius:var(--radius); padding:1.125rem; box-shadow:var(--shadow-card); border:1px solid var(--border); margin-bottom:2rem; }
+    .cg-history-card h2 { font-size:0.93rem; font-weight:700; color:var(--primary); margin-bottom:0.75rem; display:flex; align-items:center; gap:0.4rem; }
+    .cg-history-row { display:flex; align-items:center; gap:0.75rem; padding:0.5rem 0; border-bottom:1px solid var(--border-soft); flex-wrap:wrap; }
+    .cg-history-row:last-child { border-bottom:none; }
+    .cg-hist-name { font-size:0.85rem; font-weight:700; flex:1; min-width:60px; }
+    .cg-hist-age,.cg-hist-weight { font-size:0.8rem; color:var(--text-medium); }
+    .cg-hist-status { font-size:0.75rem; font-weight:700; }
+    .cg-hist-date { font-size:0.72rem; color:var(--text-light); margin-left:auto; }
+    .cg-no-history { font-size:0.85rem; color:var(--text-light); text-align:center; padding:1rem; }
+
+    .icon { display:inline-block; vertical-align:middle; }
+    @media (min-width:600px) { .cg-form-grid { grid-template-columns:repeat(3,1fr); } .cg-form-grid .form-group:first-child { grid-column:1/-1; } }
+    @media (min-width:768px) { .cg-body { padding:2rem; } }
+  </style>
+</head>
+<body class="cg-page">
+
+<header class="page-header">
+  <a href="dashboard.html" class="btn-back-nav" id="back-btn"></a>
+  <h1>Child Growth Tracker</h1>
+</header>
+
+<main class="cg-body">
+  <p class="cg-intro">Track your child's growth against WHO standards. Enter age, weight, and height to check if your child is growing well and get age-specific feeding advice. For children aged 0–60 months.</p>
+
+  <div class="cg-form-card">
+    <h2 id="form-title"></h2>
+    <form id="growth-form" novalidate>
+      <div class="cg-form-grid">
+        <div class="form-group">
+          <label for="child-name">Child's Name</label>
+          <input type="text" id="child-name" class="input-field" placeholder="e.g. Chileshe" maxlength="30">
+        </div>
+        <div class="form-group">
+          <label for="child-age">Age (months) *</label>
+          <input type="number" id="child-age" class="input-field" placeholder="e.g. 18" min="0" max="60" required>
+        </div>
+        <div class="form-group">
+          <label for="child-weight">Weight (kg) *</label>
+          <input type="number" id="child-weight" class="input-field" placeholder="e.g. 9.5" min="1" max="30" step="0.1" required>
+        </div>
+        <div class="form-group">
+          <label for="child-height">Height (cm) — optional</label>
+          <input type="number" id="child-height" class="input-field" placeholder="e.g. 80" min="40" max="130" step="0.5">
+        </div>
+        <div class="form-group" style="display:none;">
+          <input type="date" id="log-date">
+        </div>
+      </div>
+      <button type="submit" class="btn-green btn-full" id="btn-assess"></button>
+    </form>
+  </div>
+
+  <div id="result-container" class="hidden"></div>
+
+  <div class="cg-history-card">
+    <h2 id="history-title" class="hidden"></h2>
+    <div id="growth-history"><p class="cg-no-history">No records yet.</p></div>
+  </div>
+</main>
+
+<script type="module">
+  import { initChildGrowthPage } from "./js/child-growth.js";
+  import { icon } from "./js/icons.js";
+  document.getElementById("back-btn").innerHTML = icon("arrowLeft", 22);
+  document.getElementById("form-title").innerHTML = icon("child",18) + " Check Child's Growth";
+  document.getElementById("btn-assess").innerHTML = icon("check",16) + " Check Growth";
+  document.getElementById("history-title").innerHTML = icon("calendar",16) + " Previous Records";
+  document.getElementById("history-title").classList.remove("hidden");
+  initChildGrowthPage();
+</script>
+</body>
+</html>

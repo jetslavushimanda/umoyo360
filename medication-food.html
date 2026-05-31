@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0F4DA6">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Medication &amp; Food — Umoyo360</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .mf-page { min-height:100vh; background:var(--bg-light); }
+    .mf-body { padding:1rem; max-width:760px; margin:0 auto; }
+
+    .mf-intro { background:var(--bg-white); border-radius:var(--radius); padding:1.125rem; box-shadow:var(--shadow-card); border:1px solid var(--border); margin-bottom:1.25rem; font-size:0.88rem; color:var(--text-medium); line-height:1.65; }
+
+    .mf-selector-card { background:var(--bg-white); border-radius:var(--radius); padding:1.25rem; box-shadow:var(--shadow-card); border:1px solid var(--border); margin-bottom:1.25rem; }
+    .mf-selector-card h2 { font-size:0.95rem; font-weight:700; color:var(--primary); margin-bottom:0.875rem; display:flex; align-items:center; gap:0.4rem; }
+    .mf-category { margin-bottom:0.875rem; }
+    .mf-cat-label { font-size:0.72rem; font-weight:700; color:var(--text-light); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.4rem; }
+    .mf-med-chip { display:flex; align-items:center; gap:0.6rem; padding:0.65rem 0.875rem; border:1.5px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; transition:var(--transition); margin-bottom:0.4rem; font-size:0.85rem; color:var(--text-dark); background:var(--bg-white); }
+    .mf-med-chip:hover { border-color:var(--primary); background:rgba(15,77,166,0.04); }
+    .mf-med-chip.selected { border-color:var(--primary); background:rgba(15,77,166,0.07); font-weight:600; }
+    .mf-med-chip input { accent-color:var(--primary); flex-shrink:0; }
+    .mf-med-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .mf-med-name { font-size:0.85rem; flex:1; }
+
+    .mf-result-card { background:var(--bg-white); border-radius:var(--radius); padding:1.25rem; box-shadow:var(--shadow-card); border:1px solid var(--border); border-top:4px solid; margin-bottom:1rem; }
+    .mf-result-header { margin-bottom:0.875rem; }
+    .mf-cat-badge { display:inline-block; padding:0.2rem 0.65rem; border-radius:20px; font-size:0.72rem; font-weight:700; margin-bottom:0.5rem; }
+    .mf-med-title { font-size:1rem; font-weight:800; color:var(--text-dark); margin-bottom:0.35rem; }
+    .mf-med-desc { font-size:0.85rem; color:var(--text-medium); line-height:1.6; margin-bottom:0.625rem; }
+    .mf-take-with { background:rgba(15,77,166,0.05); border-radius:var(--radius-sm); padding:0.625rem 0.875rem; font-size:0.83rem; color:var(--text-dark); display:flex; align-items:flex-start; gap:0.4rem; line-height:1.5; }
+
+    .mf-food-cols { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin:0.875rem 0; }
+    .mf-col { padding:0.875rem; border-radius:var(--radius-sm); }
+    .mf-eat-col { background:rgba(13,153,84,0.06); border:1px solid rgba(13,153,84,0.18); }
+    .mf-avoid-col { background:rgba(220,38,38,0.05); border:1px solid rgba(220,38,38,0.15); }
+    .mf-col-head { font-size:0.75rem; font-weight:700; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.3rem; }
+    .mf-eat-col .mf-col-head { color:var(--accent-green); }
+    .mf-avoid-col .mf-col-head { color:var(--accent-red); }
+    .mf-food-item { margin-bottom:0.4rem; }
+    .mf-food-name { display:block; font-size:0.8rem; font-weight:600; color:var(--text-dark); }
+    .mf-food-why  { display:block; font-size:0.71rem; color:var(--text-light); margin-top:0.1rem; line-height:1.4; }
+
+    .mf-tip { background:rgba(15,77,166,0.05); border-left:3px solid var(--primary); border-radius:var(--radius-sm); padding:0.75rem 0.875rem; font-size:0.83rem; color:var(--text-dark); display:flex; align-items:flex-start; gap:0.4rem; line-height:1.5; margin-bottom:0.5rem; }
+    .mf-clinic-warn { background:rgba(220,38,38,0.06); border-left:3px solid var(--accent-red); border-radius:var(--radius-sm); padding:0.75rem 0.875rem; font-size:0.83rem; color:var(--text-dark); display:flex; align-items:flex-start; gap:0.4rem; line-height:1.5; }
+
+    .icon { display:inline-block; vertical-align:middle; }
+    @media (max-width:480px) { .mf-food-cols { grid-template-columns:1fr; } }
+    @media (min-width:768px) { .mf-body { padding:2rem; } }
+  </style>
+</head>
+<body class="mf-page">
+
+<header class="page-header">
+  <a href="dashboard.html" class="btn-back-nav" id="back-btn"></a>
+  <h1>Medication &amp; Food Interactions</h1>
+</header>
+
+<main class="mf-body">
+  <p class="mf-intro">Select the medications you or a family member take. The app will show you which foods to eat and which to avoid to ensure your medication works correctly and safely.</p>
+
+  <div class="mf-selector-card">
+    <h2 id="selector-title"></h2>
+    <div id="med-list"></div>
+  </div>
+
+  <div id="mf-results" class="hidden"></div>
+</main>
+
+<script type="module">
+  import { initMedicationFoodPage } from "./js/medication-food.js";
+  import { icon } from "./js/icons.js";
+  document.getElementById("back-btn").innerHTML = icon("arrowLeft", 22);
+  document.getElementById("selector-title").innerHTML = icon("medication",18) + " Select Your Medication(s)";
+  initMedicationFoodPage();
+</script>
+</body>
+</html>
