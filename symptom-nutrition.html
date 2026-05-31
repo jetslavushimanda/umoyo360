@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Symptom to Nutrition — Umoyo360</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .sn-page { min-height:100vh; background:var(--bg-light); }
+    .sn-body { padding:1rem; max-width:680px; margin:0 auto; }
+
+    .sn-intro-card { background:var(--bg-white); border-radius:var(--radius); padding:1.25rem; box-shadow:var(--shadow-card); margin-bottom:1rem; border:1px solid var(--border); }
+    .sn-intro-card p { font-size:0.9rem; color:var(--text-medium); line-height:1.65; }
+    .sn-limit-note { margin-top:0.5rem; font-size:0.8rem; color:var(--text-light); display:flex; align-items:center; gap:0.3rem; }
+
+    .sn-symptom-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.875rem; }
+    .sn-symptom-btn {
+      background:var(--bg-white); border:1.5px solid var(--border); border-radius:var(--radius-sm);
+      padding:0.65rem 0.75rem; text-align:left; cursor:pointer;
+      display:flex; align-items:center; gap:0.6rem; min-height:52px;
+      transition:var(--transition); color:var(--text-dark);
+    }
+    .sn-symptom-btn:hover { border-color:var(--primary); background:rgba(15,77,166,0.04); }
+    .sn-symptom-btn.selected { border-color:var(--primary); background:rgba(15,77,166,0.08); font-weight:600; }
+    .sn-symptom-emoji { font-size:1.3rem; flex-shrink:0; }
+    .sn-symptom-label { font-size:0.8rem; line-height:1.35; }
+
+    .sn-selected-count { text-align:center; font-size:0.85rem; color:var(--text-medium); font-weight:600; margin-bottom:0.75rem; }
+    .sn-check-btn { margin-bottom:1.5rem; gap:0.4rem; }
+
+    .sn-results-header { background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:#fff; border-radius:var(--radius); padding:1.25rem; margin-bottom:1rem; }
+    .sn-results-header h2 { font-size:1.05rem; font-weight:700; display:flex; align-items:center; gap:0.5rem; margin-bottom:0.35rem; }
+    .sn-results-sub { font-size:0.85rem; opacity:0.85; }
+
+    .sn-deficiency-card { background:var(--bg-white); border-radius:var(--radius); padding:1.25rem; box-shadow:var(--shadow-card); margin-bottom:0.875rem; border:1px solid var(--border); border-top:4px solid currentColor; }
+    .sn-def-header { display:flex; align-items:flex-start; gap:0.75rem; margin-bottom:0.875rem; flex-wrap:wrap; }
+    .sn-def-rank { width:28px; height:28px; border-radius:50%; color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:900; flex-shrink:0; margin-top:2px; }
+    .sn-def-title { flex:1; min-width:0; }
+    .sn-def-title h3 { font-size:0.95rem; font-weight:700; margin-bottom:0.35rem; }
+    .sn-urgency-badge { display:inline-block; padding:0.2rem 0.6rem; border-radius:20px; font-size:0.72rem; font-weight:700; }
+    .sn-match-score { font-size:0.75rem; font-weight:700; color:var(--text-light); white-space:nowrap; margin-top:2px; }
+
+    .sn-def-desc { font-size:0.85rem; color:var(--text-medium); line-height:1.65; margin-bottom:1rem; }
+
+    .sn-food-cols { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:0.875rem; }
+    .sn-food-col { padding:0.75rem; border-radius:var(--radius-sm); }
+    .sn-eat { background:rgba(13,153,84,0.06); border:1px solid rgba(13,153,84,0.18); }
+    .sn-avoid { background:rgba(220,38,38,0.05); border:1px solid rgba(220,38,38,0.15); }
+    .sn-food-col-head { font-size:0.76rem; font-weight:700; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.3rem; }
+    .sn-eat .sn-food-col-head { color:var(--accent-green); }
+    .sn-avoid .sn-food-col-head { color:var(--accent-red); }
+    .sn-food-col ul { display:flex; flex-direction:column; gap:0.3rem; }
+    .sn-food-col li { font-size:0.78rem; color:var(--text-dark); line-height:1.4; }
+    .sn-food-note { display:block; font-size:0.7rem; color:var(--text-light); margin-top:0.1rem; }
+
+    .sn-tip-box { background:rgba(15,77,166,0.05); border-left:3px solid var(--primary); border-radius:var(--radius-sm); padding:0.75rem 0.875rem; font-size:0.83rem; color:var(--text-dark); display:flex; gap:0.4rem; align-items:flex-start; line-height:1.5; margin-bottom:0.5rem; }
+    .sn-clinic-box { background:rgba(220,38,38,0.06); border-left:3px solid var(--accent-red); border-radius:var(--radius-sm); padding:0.75rem 0.875rem; font-size:0.83rem; color:var(--text-dark); display:flex; gap:0.4rem; align-items:flex-start; line-height:1.5; }
+
+    .sn-clinic-summary { background:rgba(220,38,38,0.06); border:1.5px solid rgba(220,38,38,0.25); border-radius:var(--radius); padding:1.25rem; margin-bottom:1rem; }
+    .sn-clinic-summary h3 { font-size:0.95rem; color:var(--accent-red); font-weight:700; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.4rem; }
+    .sn-clinic-summary p { font-size:0.85rem; color:var(--text-dark); line-height:1.65; }
+
+    .sn-action-row { display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:2rem; }
+    .sn-action-row .btn-green, .sn-action-row .btn-secondary { flex:1; }
+
+    .sn-past-card { background:var(--bg-white); border-radius:var(--radius); padding:1.25rem; box-shadow:var(--shadow-card); margin-bottom:2rem; border:1px solid var(--border); }
+    .sn-past-card h2 { font-size:0.93rem; color:var(--primary); margin-bottom:0.875rem; display:flex; align-items:center; gap:0.4rem; font-weight:700; }
+    .sn-past-row { display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:0.5rem; }
+    .sn-past-row:last-child { border-bottom:none; }
+    .sn-past-date { font-size:0.78rem; color:var(--text-light); display:flex; align-items:center; gap:0.3rem; }
+    .sn-past-symptoms { font-size:0.78rem; color:var(--text-medium); }
+    .sn-past-top { font-size:0.78rem; font-weight:600; }
+    .sn-no-history { font-size:0.85rem; color:var(--text-light); text-align:center; padding:1rem; }
+
+    .icon { display:inline-block; vertical-align:middle; }
+
+    @media (max-width:480px) {
+      .sn-symptom-grid { grid-template-columns:1fr; }
+      .sn-food-cols { grid-template-columns:1fr; }
+      .sn-body { padding:0.75rem; }
+    }
+    @media (min-width:768px) { .sn-body { padding:2rem; } }
+  </style>
+</head>
+<body class="sn-page">
+
+<header class="page-header">
+  <a href="dashboard.html" class="btn-back-nav" id="back-btn"></a>
+  <h1>Symptom to Nutrition Connector</h1>
+</header>
+
+<main class="sn-body">
+  <div id="symptom-container">
+    <div class="loading-spinner"><div class="spinner"></div></div>
+  </div>
+
+  <div id="results-container" class="hidden"></div>
+
+  <div class="sn-past-card">
+    <h2 id="past-title" class="hidden"></h2>
+    <div id="past-checks"><p class="sn-no-history">No previous checks yet.</p></div>
+  </div>
+</main>
+
+<script type="module">
+  import { initSymptomNutritionPage } from "./js/symptom-nutrition.js";
+  import { icon } from "./js/icons.js";
+  document.getElementById("back-btn").innerHTML = icon("arrowLeft", 22);
+  document.getElementById("past-title").innerHTML = icon("calendar",16) + " Previous Checks";
+  initSymptomNutritionPage();
+</script>
+</body>
+</html>

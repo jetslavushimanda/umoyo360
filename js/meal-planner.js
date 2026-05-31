@@ -313,7 +313,7 @@ export function renderPlanDisplay(plan) {
       <p>This ${plan.planDuration}-day plan is personalized for <strong>${plan.conditionName}</strong>.</p>
       <p>Every meal uses real Zambian foods available at your local market.</p>
       <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:0.5rem;">
-        <a href="water-tracker.html" class="btn-primary">Track Water Intake</a>
+        <a href="symptom-nutrition.html" class="btn-primary">Symptom Checker</a>
         <a href="risk-assessment.html" class="btn-secondary">Risk Assessment</a>
       </div>
     </div>`;
