@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Water Tracker — Umoyo360</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .water-page { min-height:100vh; background:var(--bg-light); }
+    .water-body { padding:1rem; max-width:540px; margin:0 auto; }
+    .water-today-card { background:var(--bg-white); border-radius:var(--radius); padding:1.5rem; box-shadow:var(--shadow); margin-bottom:1.25rem; text-align:center; }
+    .water-big-count { font-size:4rem; font-weight:900; line-height:1; margin-bottom:0.25rem; }
+    .water-big-unit { font-size:2rem; color:var(--text-medium); }
+    .water-glasses-label { font-size:0.875rem; color:var(--text-medium); margin-bottom:1.25rem; }
+    .water-circle-wrap { display:flex; justify-content:center; margin-bottom:1.25rem; }
+    .water-circle-svg { width:130px; height:130px; }
+    .water-cups-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:0.5rem; max-width:200px; margin:0 auto 1.25rem; }
+    .water-cup { display:flex; justify-content:center; transition:transform 0.2s; }
+    .water-cup.filled { transform:scale(1.05); }
+    .water-goal-complete { background:#F0FFF4; border:2px solid var(--accent-green); border-radius:var(--radius-sm); padding:0.75rem 1rem; color:var(--accent-green); font-weight:700; font-size:0.875rem; display:flex; align-items:center; justify-content:center; gap:0.4rem; }
+    .water-remaining { color:var(--text-medium); font-size:0.875rem; padding:0.5rem 0; }
+
+    .water-controls { display:flex; gap:0.75rem; justify-content:center; margin-bottom:1rem; }
+    .water-btn-remove { padding:0.875rem 1.25rem; border:2px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-white); font-size:1.25rem; min-width:56px; min-height:56px; font-weight:700; color:var(--text-medium); cursor:pointer; transition:all 0.2s; }
+    .water-btn-remove:hover { border-color:var(--accent-red); color:var(--accent-red); }
+    .water-btn-add { padding:0.875rem 2rem; border-radius:var(--radius-sm); background:var(--secondary); color:#fff; font-size:1rem; font-weight:700; border:none; min-height:56px; cursor:pointer; flex:1; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:0.5rem; }
+    .water-btn-add:hover { background:var(--primary); transform:translateY(-1px); }
+
+    .water-history-card { background:var(--bg-white); border-radius:var(--radius); padding:1.5rem; box-shadow:var(--shadow); margin-bottom:2rem; }
+    .water-history-card h2 { font-size:0.95rem; color:var(--primary); margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem; }
+    .water-week-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.75rem; margin-bottom:1.25rem; }
+    .water-week-stat { text-align:center; padding:0.875rem; background:var(--bg-light); border-radius:var(--radius-sm); }
+    .wws-val { display:block; font-size:1.75rem; font-weight:900; color:var(--primary); }
+    .wws-label { font-size:0.7rem; color:var(--text-medium); font-weight:600; text-transform:uppercase; }
+    .water-bar-chart { display:flex; align-items:flex-end; gap:0.5rem; height:90px; padding-top:1rem; }
+    .water-bar-col { display:flex; flex-direction:column; align-items:center; gap:0.2rem; flex:1; }
+    .water-bar-value { font-size:0.72rem; font-weight:700; color:var(--text-medium); }
+    .water-bar-outer { width:100%; background:var(--border); border-radius:4px; height:70px; display:flex; align-items:flex-end; overflow:hidden; }
+    .water-bar-inner { width:100%; border-radius:4px; transition:height 0.5s ease; min-height:2px; }
+    .water-bar-day { font-size:0.7rem; color:var(--text-medium); font-weight:600; }
+
+    .water-tip { background:#EBF5FB; border-left:4px solid var(--secondary); border-radius:var(--radius-sm); padding:0.875rem 1rem; font-size:0.875rem; color:var(--text-dark); margin-bottom:1.25rem; }
+    .water-goal-row { display:flex; align-items:center; justify-content:space-between; background:var(--bg-white); border-radius:var(--radius-sm); padding:0.75rem 1rem; box-shadow:var(--shadow); margin-bottom:1.25rem; }
+    #goal-label { font-size:0.875rem; color:var(--text-medium); font-weight:600; }
+    .water-set-goal-btn { display:flex; align-items:center; gap:0.35rem; padding:0.45rem 0.875rem; border:2px solid var(--secondary); border-radius:var(--radius-sm); background:transparent; color:var(--secondary); font-size:0.82rem; font-weight:700; cursor:pointer; transition:all 0.2s; min-height:40px; }
+    .water-set-goal-btn:hover { background:var(--secondary); color:#fff; }
+    .icon { display:inline-block; vertical-align:middle; }
+    @media (min-width:768px) { .water-body { padding:2rem; } .water-cups-grid { max-width:240px; } }
+  </style>
+</head>
+<body class="water-page">
+<header class="page-header">
+  <a href="dashboard.html" class="btn-back-nav" id="back-btn"></a>
+  <h1>Water Intake Tracker</h1>
+</header>
+
+<main class="water-body">
+  <div class="water-tip" id="water-tip"></div>
+
+  <div class="water-today-card">
+    <div id="today-display">
+      <div class="loading-spinner"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <div class="water-controls">
+    <button class="water-btn-remove" id="btn-remove-glass">−</button>
+    <button class="water-btn-add" id="btn-add-glass"></button>
+  </div>
+
+  <div class="water-goal-row">
+    <span id="goal-label"></span>
+    <button class="water-set-goal-btn" id="btn-set-goal"></button>
+  </div>
+
+  <div class="water-history-card">
+    <h2 id="history-title"></h2>
+    <div id="week-history"><div class="loading-spinner"><div class="spinner"></div></div></div>
+  </div>
+</main>
+
+<script type="module">
+  import { initWaterTrackerPage } from "./js/water-tracker.js";
+  import { icon } from "./js/icons.js";
+  document.getElementById("back-btn").innerHTML = icon("arrowLeft", 22);
+  document.getElementById("btn-add-glass").innerHTML = icon("plus",18) + " Add a Glass";
+  document.getElementById("btn-set-goal").innerHTML = icon("target",14) + " Set Goal";
+  document.getElementById("history-title").innerHTML = icon("calendar",18) + " This Week";
+  document.getElementById("water-tip").innerHTML = icon("info",16) + " <strong>Tip:</strong> Drinking 8 glasses (2 litres) of water daily helps prevent kidney stones, improves energy, and helps manage blood pressure.";
+  initWaterTrackerPage();
+</script>
+</body>
+</html>

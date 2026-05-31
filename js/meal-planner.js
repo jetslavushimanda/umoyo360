@@ -3,6 +3,7 @@ import { collection, addDoc, getDocs, query, where, orderBy, limit, serverTimest
 import { requireAuth, loadUserProfile, showToast, getDayName, shuffleArray, formatDateShort } from "./utils.js";
 import { FOODS_DATABASE, getCategories, getFoodsByCategory } from "./foods-database.js";
 import { getConditionById, getMealStructure } from "./conditions.js";
+import { icon } from "./icons.js";
 
 let currentUser = null;
 let userProfile = null;
@@ -174,6 +175,7 @@ async function handleGenerate() {
     }
     generatedPlan = generateMealPlan([...selectedFoodIds], userProfile.condition, planDuration);
     await savePlanToFirestore(generatedPlan);
+    renderNutritionSummary([...selectedFoodIds], userProfile.condition);
     renderPlanDisplay(generatedPlan);
     document.getElementById("plan-display").scrollIntoView({ behavior: "smooth" });
     showToast("Meal plan generated and saved!");
@@ -310,11 +312,89 @@ export function renderPlanDisplay(plan) {
       <h3>Plan Summary</h3>
       <p>This ${plan.planDuration}-day plan is personalized for <strong>${plan.conditionName}</strong>.</p>
       <p>Every meal uses real Zambian foods available at your local market.</p>
-      <a href="health-tracker.html" class="btn-primary">Track Your Progress</a>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:0.5rem;">
+        <a href="water-tracker.html" class="btn-primary">Track Water Intake</a>
+        <a href="risk-assessment.html" class="btn-secondary">Risk Assessment</a>
+      </div>
     </div>`;
   document.getElementById("btn-new-plan")?.addEventListener("click", () => { container.classList.add("hidden"); window.scrollTo({top:0,behavior:"smooth"}); });
   container.querySelector(".day-card")?.classList.add("expanded");
   document.getElementById("btn-download-pdf")?.addEventListener("click", () => downloadPlanAsPDF(plan));
+}
+
+export function renderNutritionSummary(foodIds, conditionId) {
+  const container = document.getElementById("nutrition-summary");
+  if (!container) return;
+
+  const foods = FOODS_DATABASE.filter(f => foodIds.includes(f.id));
+  const condition = getConditionById(conditionId);
+
+  const count = (nutrient, level) => foods.filter(f => f.nutrients[nutrient] === level).length;
+  const pct = (val, total) => Math.min(Math.round((val / Math.max(total,1)) * 100), 100);
+
+  const total = foods.length || 1;
+  const nutrients = [
+    { name:"Protein", key:"protein", icon:"💪", color:"#8E44AD" },
+    { name:"Fiber", key:"fiber", icon:"🌾", color:"#27AE60" },
+    { name:"Iron", key:"iron", icon:"🔴", color:"#C0392B" },
+    { name:"Vitamin A", key:"vitaminA", icon:"🟠", color:"#D35400" },
+    { name:"Vitamin C", key:"vitaminC", icon:"🟡", color:"#F39C12" },
+    { name:"Calcium", key:"calcium", icon:"⬜", color:"#2E86C1" },
+    { name:"Potassium", key:"potassium", icon:"🟣", color:"#884EA0" },
+  ];
+
+  const rows = nutrients.map(n => {
+    const high = count(n.key, "high");
+    const medium = count(n.key, "medium");
+    const score = high * 2 + medium;
+    const maxScore = total * 2;
+    const p = pct(score, maxScore);
+    const level = p >= 60 ? "Good" : p >= 30 ? "Moderate" : "Low";
+    const levelColor = p >= 60 ? "#1E8449" : p >= 30 ? "#D35400" : "#C0392B";
+    return { ...n, high, medium, p, level, levelColor };
+  });
+
+  const forbiddenInPlan = foods.filter(f => f.forbiddenFor.includes(conditionId));
+  const recommendedInPlan = foods.filter(f => f.recommendedFor.includes(conditionId));
+
+  container.classList.remove("hidden");
+  container.innerHTML = `
+    <div class="nutrition-summary-card">
+      <h3 class="nutrition-summary-title">Nutrition Summary — ${foods.length} Foods Selected</h3>
+      <p class="nutrition-summary-sub">Coverage across your selected foods for <strong>${condition?.name || "your condition"}</strong></p>
+
+      <div class="nutrient-rows">
+        ${rows.map(r => `
+          <div class="nutrient-row">
+            <div class="nutrient-label">${r.name}</div>
+            <div class="nutrient-bar-wrap">
+              <div class="nutrient-bar-fill" style="width:${r.p}%;background:${r.levelColor};"></div>
+            </div>
+            <span class="nutrient-level" style="color:${r.levelColor};">${r.level}</span>
+          </div>
+        `).join("")}
+      </div>
+
+      <div class="nutrition-highlights">
+        <div class="nutrition-highlight highlight-green">
+          <strong>${icon("check",16)} ${recommendedInPlan.length} recommended foods</strong> for ${condition?.shortName || "your condition"} in your selection.
+        </div>
+        ${forbiddenInPlan.length > 0 ? `
+          <div class="nutrition-highlight highlight-red">
+            <strong>${icon("info",16)} ${forbiddenInPlan.length} restricted food${forbiddenInPlan.length>1?"s":""}</strong> detected. These are excluded from your meal plan automatically.
+          </div>
+        ` : ""}
+      </div>
+
+      ${condition ? `
+        <div class="nutrition-condition-note">
+          <strong>Key nutrients for ${condition.shortName}:</strong>
+          Maximize — ${condition.nutritionPriorities.maximize.join(", ")}.
+          Minimize — ${condition.nutritionPriorities.minimize.join(", ")}.
+        </div>
+      ` : ""}
+    </div>
+  `;
 }
 
 async function savePlanToFirestore(plan) {

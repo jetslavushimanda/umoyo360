@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Risk Assessment — Umoyo360</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .risk-page { min-height:100vh; background:var(--bg-light); }
+    .risk-body { padding:1rem; max-width:640px; margin:0 auto; }
+
+    .quiz-progress { margin-bottom:1rem; }
+    .quiz-progress-bar { height:8px; background:var(--border); border-radius:4px; overflow:hidden; margin-bottom:0.4rem; }
+    .quiz-progress-fill { height:100%; background:var(--primary); border-radius:4px; transition:width 0.4s ease; }
+    .quiz-progress-label { font-size:0.78rem; color:var(--text-medium); font-weight:600; }
+
+    .quiz-question-card { background:var(--bg-white); border-radius:var(--radius); padding:1.5rem; box-shadow:var(--shadow); }
+    .quiz-question-text { font-size:1rem; font-weight:700; color:var(--text-dark); margin-bottom:1.25rem; line-height:1.5; }
+    .quiz-options { display:flex; flex-direction:column; gap:0.6rem; margin-bottom:1.5rem; }
+    .quiz-option-btn { padding:0.875rem 1rem; border:2px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-white); text-align:left; font-size:0.9rem; font-weight:500; cursor:pointer; transition:all 0.2s; color:var(--text-dark); min-height:48px; }
+    .quiz-option-btn:hover { border-color:var(--secondary); background:#F0F8FF; }
+    .quiz-option-btn.selected { border-color:var(--primary); background:#EBF5FB; font-weight:700; color:var(--primary); }
+    .quiz-nav { display:flex; justify-content:space-between; align-items:center; gap:0.75rem; }
+    .quiz-nav .btn-primary:disabled, .quiz-nav .btn-green:disabled { background:var(--text-light); cursor:not-allowed; }
+
+    .results-header { background:var(--bg-white); border-radius:var(--radius); padding:1.5rem; margin-bottom:1rem; box-shadow:var(--shadow); text-align:center; }
+    .results-title { font-size:1.1rem; font-weight:700; color:var(--primary); display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom:0.5rem; }
+    .results-subtitle { color:var(--text-medium); font-size:0.875rem; }
+    .results-list { background:var(--bg-white); border-radius:var(--radius); padding:1.25rem; box-shadow:var(--shadow); margin-bottom:1rem; display:flex; flex-direction:column; gap:0.875rem; }
+    .result-row { display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; }
+    .result-condition { font-size:0.875rem; font-weight:600; color:var(--text-dark); width:160px; flex-shrink:0; }
+    .result-bar-wrap { flex:1; height:10px; background:var(--border); border-radius:5px; overflow:hidden; min-width:80px; }
+    .result-bar-fill { height:100%; border-radius:5px; transition:width 0.6s ease; }
+    .result-badge { padding:0.2rem 0.65rem; border-radius:10px; color:#fff; font-size:0.72rem; font-weight:700; white-space:nowrap; }
+    .results-advice { background:#EBF5FB; border-left:4px solid var(--primary); border-radius:var(--radius-sm); padding:1rem; font-size:0.875rem; color:var(--text-dark); margin-bottom:1rem; display:flex; align-items:flex-start; gap:0.4rem; }
+    .results-actions { display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+    .results-actions .btn-green, .results-actions .btn-secondary { flex:1; }
+
+    .past-results-card { background:var(--bg-white); border-radius:var(--radius); padding:1.25rem; box-shadow:var(--shadow); margin-bottom:2rem; }
+    .past-results-card h2 { font-size:0.95rem; color:var(--primary); margin-bottom:0.875rem; display:flex; align-items:center; gap:0.5rem; }
+    .past-result-row { display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:0.5rem; }
+    .past-result-row:last-child { border-bottom:none; }
+    .intro-card { background:var(--bg-white); border-radius:var(--radius); padding:1.25rem; box-shadow:var(--shadow); margin-bottom:1rem; }
+    .intro-card p { color:var(--text-medium); font-size:0.875rem; line-height:1.6; }
+    .icon { display:inline-block; vertical-align:middle; }
+
+    .advice-section { margin-bottom:1.5rem; }
+    .advice-section-title { font-size:1rem; font-weight:700; color:var(--primary); margin-bottom:0.25rem; display:flex; align-items:center; gap:0.4rem; }
+    .advice-section-sub { font-size:0.82rem; color:var(--text-medium); margin-bottom:0.875rem; }
+    .advice-card { background:var(--bg-white); border-radius:var(--radius); padding:1.25rem; box-shadow:var(--shadow); margin-bottom:0.875rem; border-top:3px solid var(--primary); }
+    .advice-card-title { font-size:0.875rem; font-weight:700; margin-bottom:0.875rem; display:flex; align-items:center; flex-wrap:wrap; gap:0.3rem; }
+    .advice-cols { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
+    .advice-col { padding:0.75rem; border-radius:var(--radius-sm); }
+    .advice-eat { background:#F0FFF4; }
+    .advice-avoid { background:#FEF9E7; }
+    .advice-col-head { font-size:0.78rem; font-weight:700; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.3rem; color:var(--text-dark); }
+    .advice-eat .advice-col-head { color:#1E8449; }
+    .advice-avoid .advice-col-head { color:#D35400; }
+    .advice-col ul { margin:0; padding-left:1rem; }
+    .advice-col ul li { font-size:0.78rem; color:var(--text-dark); padding:0.15rem 0; line-height:1.4; }
+    .advice-next-steps { background:#EBF5FB; border-radius:var(--radius-sm); padding:0.875rem 1rem; font-size:0.875rem; color:var(--text-dark); display:flex; align-items:flex-start; gap:0.4rem; border-left:4px solid var(--secondary); }
+    .advice-next-steps a { color:var(--primary); }
+    @media (max-width:480px) { .advice-cols { grid-template-columns:1fr; } }
+    @media (min-width:768px) { .risk-body { padding:2rem; } .result-condition { width:200px; } }
+  </style>
+</head>
+<body class="risk-page">
+<header class="page-header">
+  <a href="dashboard.html" class="btn-back-nav" id="back-btn"></a>
+  <h1>Condition Risk Assessment</h1>
+</header>
+
+<main class="risk-body">
+  <div class="intro-card">
+    <p>Answer 12 quick questions about your diet and lifestyle. We will calculate your personal risk level for common diet-related conditions in Zambia. This is for information only — not a medical diagnosis.</p>
+  </div>
+
+  <div id="quiz-container">
+    <div class="loading-spinner"><div class="spinner"></div></div>
+  </div>
+
+  <div class="past-results-card">
+    <h2 id="past-title"></h2>
+    <div id="past-results"><p style="color:var(--text-medium);font-size:0.875rem;">No previous assessments yet.</p></div>
+  </div>
+</main>
+
+<script type="module">
+  import { initRiskAssessmentPage } from "./js/risk-assessment.js";
+  import { icon } from "./js/icons.js";
+  document.getElementById("back-btn").innerHTML = icon("arrowLeft", 22);
+  document.getElementById("past-title").innerHTML = icon("calendar",18) + " Previous Assessments";
+  initRiskAssessmentPage();
+</script>
+</body>
+</html>
