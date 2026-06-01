@@ -7,6 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Meal Budget Planner — Umoyo360</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     .mb-page { min-height:100vh; background:var(--bg-light); }
     .mb-body { padding:1rem; max-width:680px; margin:0 auto; }
@@ -14,40 +15,69 @@
     .mb-form-card { background:var(--bg-white); border-radius:var(--radius); padding:1.375rem; box-shadow:var(--shadow-card); border:1px solid var(--border); margin-bottom:1.25rem; }
     .mb-form-card h2 { font-size:0.97rem; font-weight:700; color:var(--primary); margin-bottom:1rem; display:flex; align-items:center; gap:0.4rem; }
 
-    .mb-range-group { margin-bottom:1.25rem; }
-    .mb-range-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.625rem; }
-    .mb-range-header label { font-size:0.9rem; font-weight:600; color:var(--text-dark); }
-    .mb-budget-display { font-size:1.75rem; font-weight:900; color:var(--primary); }
-    .mb-range-labels { display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-light); margin-top:0.3rem; }
-    input[type="range"] { width:100%; accent-color:var(--primary); height:6px; }
-
     .mb-size-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:0.5rem; margin-top:0.4rem; }
     .mb-size-btn { padding:0.5rem; border:1.5px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-surface); font-size:0.85rem; font-weight:700; cursor:pointer; transition:var(--transition); font-family:inherit; text-align:center; }
     .mb-size-btn.active { border-color:var(--primary); background:rgba(15,77,166,0.08); color:var(--primary); }
 
-    .mb-result-header { background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:#fff; border-radius:var(--radius); padding:1.125rem; margin-bottom:0.875rem; }
-    .mb-budget-summary { display:grid; grid-template-columns:repeat(4,1fr); gap:0.5rem; margin-bottom:0.75rem; }
-    .mb-budget-item { text-align:center; }
-    .mb-budget-num { display:block; font-size:1.4rem; font-weight:900; }
-    .mb-budget-lbl { display:block; font-size:0.68rem; opacity:0.8; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
-    .mb-nutrition-pills { display:flex; flex-wrap:wrap; gap:0.35rem; }
-    .mb-nut-pill { padding:0.2rem 0.6rem; border-radius:20px; font-size:0.72rem; font-weight:700; }
-    .mb-nut-yes { background:rgba(13,153,84,0.15); color:#0D9954; border:1px solid rgba(13,153,84,0.3); }
-    .mb-nut-no  { background:rgba(220,38,38,0.1);  color:#DC2626; border:1px solid rgba(220,38,38,0.25); }
+    .mb-budget-input { width:100%; padding:0.75rem 1rem; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:1.1rem; font-weight:700; color:var(--primary); background:var(--bg-white); appearance:none; transition:var(--transition); }
+    .mb-budget-input:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(15,77,166,0.12); }
+    .mb-budget-input::placeholder { color:var(--text-light); font-weight:400; font-size:0.9rem; }
 
-    .mb-meal-card { background:var(--bg-white); border-radius:var(--radius); padding:1rem 1.125rem; box-shadow:var(--shadow-card); border:1px solid var(--border); margin-bottom:0.625rem; }
-    .mb-meal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem; flex-wrap:wrap; gap:0.4rem; }
-    .mb-meal-name { font-size:0.88rem; font-weight:600; color:var(--text-dark); }
-    .mb-meal-cost { font-size:0.82rem; font-weight:700; color:var(--accent-green); background:rgba(13,153,84,0.08); padding:0.2rem 0.55rem; border-radius:20px; border:1px solid rgba(13,153,84,0.2); }
-    .mb-food-list { display:flex; flex-wrap:wrap; gap:0.4rem; }
-    .mb-food-chip { display:flex; align-items:center; gap:0.25rem; font-size:0.75rem; color:var(--text-medium); background:var(--bg-surface); padding:0.25rem 0.6rem; border-radius:20px; border:1px solid var(--border); }
-    .mb-food-chip em { color:var(--text-light); font-style:normal; }
+    .mb-select { width:100%; padding:0.65rem 0.875rem; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:0.9rem; color:var(--text-dark); background:var(--bg-white); appearance:none; cursor:pointer; }
+    .mb-select:focus { outline:none; border-color:var(--primary); }
+    .mb-label { font-size:0.9rem; font-weight:600; color:var(--text-dark); display:block; margin-bottom:0.5rem; }
 
     .mb-tip-card { background:rgba(15,77,166,0.05); border-left:3px solid var(--primary); border-radius:var(--radius-sm); padding:0.875rem; font-size:0.83rem; color:var(--text-dark); display:flex; align-items:flex-start; gap:0.4rem; line-height:1.6; margin-bottom:0.75rem; }
-    .mb-nutrition-note { font-size:0.82rem; color:var(--text-medium); padding:0.875rem 1rem; background:var(--bg-white); border-radius:var(--radius-sm); border:1px solid var(--border); margin-bottom:2rem; line-height:1.6; }
+    .mb-result-header { background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:#fff; border-radius:var(--radius); padding:1.125rem; margin-bottom:0.875rem; }
+
+    /* Duration toggle */
+    .mb-dur-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:1rem; }
+    .mb-dur-btn { padding:0.6rem; border:1.5px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-surface); font-size:0.88rem; font-weight:700; cursor:pointer; transition:var(--transition); font-family:inherit; text-align:center; }
+    .mb-dur-btn.active { border-color:var(--accent-green); background:rgba(13,153,84,0.08); color:var(--accent-green); }
+
+    /* Budget summary card */
+    .budget-summary-card { background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%); border-radius:var(--radius); padding:1.25rem; color:white; margin-bottom:1rem; }
+    .budget-summary-card h3 { font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; opacity:0.7; margin-bottom:0.5rem; }
+    .budget-summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-top:0.75rem; }
+    .budget-summary-item { background:rgba(255,255,255,0.12); border-radius:10px; padding:0.625rem; }
+    .budget-summary-label { font-size:0.7rem; opacity:0.7; margin-bottom:2px; }
+    .budget-summary-value { font-size:1.05rem; font-weight:800; letter-spacing:-0.02em; }
+    .condition-badge { display:inline-block; padding:0.2rem 0.65rem; border-radius:20px; font-size:0.75rem; font-weight:700; background:rgba(255,255,255,0.2); margin-top:0.5rem; }
+
+    /* Shopping list card */
+    .shopping-list-card { background:var(--bg-white); border-radius:var(--radius); border:1px solid var(--border); overflow:hidden; margin-bottom:0.75rem; }
+    .shopping-list-header { background:var(--bg-surface); padding:0.75rem 1rem; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-medium); border-bottom:1px solid var(--border); }
+    .shopping-list-item { display:flex; justify-content:space-between; align-items:center; padding:0.625rem 1rem; border-bottom:1px solid var(--border); font-size:0.85rem; }
+    .shopping-list-item:last-child { border-bottom:none; }
+    .shopping-item-name { color:var(--text-dark); font-weight:500; }
+    .shopping-item-price { color:var(--accent-green); font-weight:700; }
+    .shopping-total-row { display:flex; justify-content:space-between; padding:0.625rem 1rem; background:var(--bg-surface); border-top:1.5px solid var(--border); font-weight:700; font-size:0.82rem; color:var(--text-medium); }
+
+    /* Meal day cards */
+    .meal-day-card { background:var(--bg-white); border-radius:var(--radius); border:1px solid var(--border); margin-bottom:0.625rem; overflow:hidden; }
+    .meal-day-header { background:var(--primary); color:white; padding:0.6rem 1rem; font-size:0.82rem; font-weight:700; }
+    .meal-row { display:flex; align-items:flex-start; padding:0.5rem 1rem; border-bottom:1px solid var(--border); gap:0.75rem; font-size:0.83rem; }
+    .meal-row:last-child { border-bottom:none; }
+    .meal-label { font-weight:700; color:var(--primary); min-width:76px; flex-shrink:0; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; padding-top:2px; }
+    .meal-foods { color:var(--text-dark); line-height:1.5; }
+
+    /* AI response styles */
+    .ai-response-wrapper { display:flex; flex-direction:column; gap:0; }
+    .ai-heading-1 { font-size:1.1rem; font-weight:800; color:var(--primary); margin:1rem 0 0.5rem; padding-bottom:0.4rem; border-bottom:2px solid var(--primary); letter-spacing:-0.02em; }
+    .ai-heading-2 { font-size:1rem; font-weight:700; color:var(--primary); margin:0.875rem 0 0.4rem; display:flex; align-items:center; gap:0.4rem; }
+    .ai-heading-2::before { content:""; display:inline-block; width:4px; height:16px; background:var(--primary); border-radius:2px; }
+    .ai-heading-3 { font-size:0.78rem; font-weight:700; color:var(--text-medium); margin:0.75rem 0 0.35rem; text-transform:uppercase; letter-spacing:0.04em; }
+    .ai-paragraph { font-size:0.88rem; color:var(--text-dark); line-height:1.7; margin:0.35rem 0; }
+    .ai-list { margin:0.4rem 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:0.3rem; }
+    .ai-list-item { font-size:0.85rem; color:var(--text-dark); line-height:1.5; padding:0.35rem 0.65rem; background:var(--bg-surface); border-radius:8px; border-left:3px solid var(--accent-green); display:flex; align-items:flex-start; gap:0.4rem; }
+    .ai-list-item::before { content:"→"; color:var(--accent-green); font-weight:700; flex-shrink:0; font-size:0.8rem; margin-top:1px; }
+    .ai-numbered-list { margin:0.4rem 0; padding:0; list-style:none; counter-reset:ai-counter; display:flex; flex-direction:column; gap:0.4rem; }
+    .ai-numbered-item { font-size:0.85rem; color:var(--text-dark); line-height:1.55; padding:0.5rem 0.75rem; background:var(--bg-white); border:1px solid var(--border); border-radius:10px; counter-increment:ai-counter; display:flex; align-items:flex-start; gap:0.625rem; }
+    .ai-numbered-item::before { content:counter(ai-counter); min-width:24px; height:24px; background:var(--primary); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; flex-shrink:0; }
+    .ai-divider { border:none; border-top:1px solid var(--border); margin:0.75rem 0; }
 
     .icon { display:inline-block; vertical-align:middle; }
-    @media (max-width:400px) { .mb-budget-summary { grid-template-columns:repeat(2,1fr); } }
+    @media (max-width:400px) { .mb-size-grid { grid-template-columns:repeat(2,1fr); } }
     @media (min-width:768px) { .mb-body { padding:2rem; } }
   </style>
 </head>
@@ -59,23 +89,24 @@
 </header>
 
 <main class="mb-body">
+
+  <!-- FORM CARD -->
   <div class="mb-form-card">
     <h2 id="form-title"></h2>
-    <p style="font-size:0.88rem;color:var(--text-medium);margin-bottom:1rem;line-height:1.65;">Enter your daily food budget and family size. The planner will suggest the most nutritious meals within your budget using approximate Zambian market prices (2024).</p>
+    <p style="font-size:0.88rem;color:var(--text-medium);margin-bottom:1.25rem;line-height:1.65;">Enter your weekly food budget and family details. We'll build a shopping list from real 2026 Zambian market prices, then AI generates your personalised meal plan.</p>
 
     <form id="budget-form" novalidate>
-      <div class="mb-range-group">
-        <div class="mb-range-header">
-          <label for="budget-range">Daily Food Budget</label>
-          <span class="mb-budget-display" id="budget-display">K60</span>
-        </div>
-        <input type="range" id="budget-range" min="20" max="300" step="5" value="60">
-        <div class="mb-range-labels"><span>K20</span><span>K60</span><span>K150</span><span>K300</span></div>
+
+      <!-- Budget number input -->
+      <div class="form-group" style="margin-bottom:1.25rem;">
+        <label class="mb-label" for="budget-input">Enter weekly budget in Kwacha</label>
+        <input type="number" id="budget-input" class="mb-budget-input" min="50" max="99999" placeholder="Enter your budget e.g. 500">
       </div>
 
-      <div class="form-group">
-        <label>Family Size</label>
-        <div class="mb-size-grid">
+      <!-- Family size -->
+      <div class="form-group" style="margin-bottom:1.25rem;">
+        <label class="mb-label">Family Size</label>
+        <div class="mb-size-grid" id="size-grid">
           <button type="button" class="mb-size-btn" data-size="1">1</button>
           <button type="button" class="mb-size-btn active" data-size="4">4</button>
           <button type="button" class="mb-size-btn" data-size="6">6</button>
@@ -84,9 +115,10 @@
         <input type="hidden" id="family-size" value="4">
       </div>
 
-      <div class="form-group" style="margin-top:1rem;">
-        <label style="font-size:0.9rem;font-weight:600;color:var(--text-dark);display:block;margin-bottom:0.5rem;">Province</label>
-        <select id="province-select" style="width:100%;padding:0.65rem 0.875rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:0.9rem;color:var(--text-dark);background:var(--bg-white);appearance:none;cursor:pointer;">
+      <!-- Province -->
+      <div class="form-group" style="margin-bottom:1.25rem;">
+        <label class="mb-label" for="province-select">Province</label>
+        <select id="province-select" class="mb-select">
           <option value="Lusaka">Lusaka</option>
           <option value="Copperbelt">Copperbelt</option>
           <option value="Central">Central</option>
@@ -100,137 +132,822 @@
         </select>
       </div>
 
-      <div class="form-group" style="margin-top:1rem;">
-        <label style="font-size:0.9rem;font-weight:600;color:var(--text-dark);display:block;margin-bottom:0.5rem;">Plan Duration</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
-          <button type="button" class="mb-size-btn active" id="dur-weekly" data-duration="7 days" style="padding:0.6rem;">
-            📅 Weekly (7 days)
-          </button>
-          <button type="button" class="mb-size-btn" id="dur-monthly" data-duration="30 days" style="padding:0.6rem;">
-            🗓 Monthly (30 days)
-          </button>
-        </div>
-        <input type="hidden" id="plan-duration" value="7 days">
+      <!-- Health condition -->
+      <div class="form-group" style="margin-bottom:1.25rem;">
+        <label class="mb-label" for="condition-select">Health Condition</label>
+        <select id="condition-select" class="mb-select">
+          <option value="general">No specific condition</option>
+          <option value="diabetes_type2">Diabetes (Type 2)</option>
+          <option value="hypertension">Hypertension</option>
+          <option value="heart_disease">Heart Disease</option>
+          <option value="kidney_disease">Kidney Disease</option>
+          <option value="obesity">Obesity</option>
+          <option value="gout">Gout</option>
+          <option value="anemia">Anaemia</option>
+          <option value="thyroid">Thyroid Condition</option>
+          <option value="celiac">Coeliac Disease</option>
+          <option value="cholesterol">High Cholesterol</option>
+          <option value="pregnancy">Pregnancy</option>
+          <option value="malnutrition">Malnutrition</option>
+        </select>
       </div>
 
-      <button type="submit" class="btn-green btn-full" id="btn-generate" style="margin-top:1.25rem;"></button>
+      <button type="submit" class="btn-green btn-full" id="btn-generate" style="margin-top:0.25rem;"></button>
     </form>
   </div>
 
+  <!-- PHASE 1 RESULT: Shopping List -->
   <div id="plan-result" class="hidden"></div>
+
+  <!-- PHASE 2: AI Meal Plan section -->
+  <div id="phase2-section" class="hidden">
+    <div class="mb-form-card">
+      <h2>Generate Your Meal Plan</h2>
+      <p style="font-size:0.88rem;color:var(--text-medium);margin-bottom:1rem;line-height:1.65;">Let AI create a meal plan using exactly what you just budgeted for.</p>
+      <div class="mb-dur-grid">
+        <button type="button" class="mb-dur-btn active" id="dur-weekly">📅 Weekly — 7 Days</button>
+        <button type="button" class="mb-dur-btn" id="dur-monthly">🗓 Monthly — 30 Days</button>
+      </div>
+      <button class="btn-green btn-full" id="btn-generate-meals">✨ Generate Meal Plan with AI</button>
+    </div>
+  </div>
+
+  <!-- PHASE 2 RESULT: Meal Plan -->
+  <div id="meal-plan-result" class="hidden"></div>
+
 </main>
 
 <script type="module">
-  import { initMealBudgetPage } from "./js/meal-budget.js";
   import { icon } from "./js/icons.js";
-  document.getElementById("back-btn").innerHTML = icon("arrowLeft", 22);
-  document.getElementById("form-title").innerHTML = icon("budget",18) + " Plan Your Meals";
-  document.getElementById("btn-generate").innerHTML = icon("mealPlanner",16) + " Generate Meal Plan";
-
-  // Family size buttons
-  document.querySelectorAll(".mb-size-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".mb-size-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      document.getElementById("family-size").value = btn.dataset.size;
-    });
-  });
-
-  initMealBudgetPage();
-
-  // Duration toggle buttons
-  document.getElementById("dur-weekly")?.addEventListener("click", () => {
-    document.getElementById("dur-weekly").classList.add("active");
-    document.getElementById("dur-monthly").classList.remove("active");
-    document.getElementById("plan-duration").value = "7 days";
-  });
-  document.getElementById("dur-monthly")?.addEventListener("click", () => {
-    document.getElementById("dur-monthly").classList.add("active");
-    document.getElementById("dur-weekly").classList.remove("active");
-    document.getElementById("plan-duration").value = "30 days";
-  });
-</script>
-
-<!-- Groq AI meal plan generation — capture-phase intercept before existing submit handler -->
-<script type="module">
   import { requireAuth, loadUserProfile } from "./js/utils.js";
-  import { generateBudgetPlan } from "./js/groq.js";
 
-  let groqCondition = "general";
+  // ── Icons ────────────────────────────────────────────────────────────────
+  document.getElementById("back-btn").innerHTML = icon("arrowLeft", 22);
+  document.getElementById("form-title").innerHTML = icon("budget", 18) + " Plan Your Meals";
+  document.getElementById("btn-generate").innerHTML = icon("mealPlanner", 16) + " Calculate My Shopping List";
 
+  // ── Groq config ──────────────────────────────────────────────────────────
+  const GROQ_API_KEY = "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";
+  const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+
+  // ── App state ────────────────────────────────────────────────────────────
+  let userProfile = { fullName: "User", condition: "general" };
+  let currentShoppingList = null;
+  let currentDays = [];
+  let currentFallbackText = "";
+  let selectedDuration = 7;
+
+  // ── Load Firebase profile ────────────────────────────────────────────────
   (async () => {
     try {
       const user = await requireAuth();
       const profile = await loadUserProfile(user.uid);
-      if (profile?.condition) groqCondition = profile.condition;
+      if (profile) {
+        userProfile.fullName = profile.fullName || "User";
+        if (profile.condition) {
+          userProfile.condition = profile.condition;
+          const condSelect = document.getElementById("condition-select");
+          const normalized = profile.condition.toLowerCase().replace(/\s+/g, "_");
+          const opt = [...condSelect.options].find(
+            o => o.value === normalized || o.value === profile.condition
+          );
+          if (opt) condSelect.value = opt.value;
+        }
+      }
     } catch { /* silent */ }
   })();
 
-  // Capture listener on main so it fires before #budget-form's own submit listener
-  document.querySelector(".mb-body").addEventListener("submit", async function(e) {
-    e.preventDefault();
-    e.stopPropagation(); // Prevent existing generatePlan() from running
+  // ── Family size buttons (scoped to #size-grid) ───────────────────────────
+  document.getElementById("size-grid").addEventListener("click", e => {
+    const btn = e.target.closest(".mb-size-btn");
+    if (!btn) return;
+    document.querySelectorAll("#size-grid .mb-size-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("family-size").value = btn.dataset.size;
+  });
 
-    const budget = parseInt(document.getElementById("budget-range")?.value || "60", 10);
-    const familySize = parseInt(document.getElementById("family-size")?.value || "4", 10);
-    const province = document.getElementById("province-select")?.value || "Lusaka";
-    const duration = document.getElementById("plan-duration")?.value || "7 days";
+  // ── Duration toggle ──────────────────────────────────────────────────────
+  document.getElementById("dur-weekly").addEventListener("click", () => {
+    document.getElementById("dur-weekly").classList.add("active");
+    document.getElementById("dur-monthly").classList.remove("active");
+    selectedDuration = 7;
+  });
+  document.getElementById("dur-monthly").addEventListener("click", () => {
+    document.getElementById("dur-monthly").classList.add("active");
+    document.getElementById("dur-weekly").classList.remove("active");
+    selectedDuration = 30;
+  });
 
-    const btn = document.getElementById("btn-generate");
-    const originalHTML = btn?.innerHTML;
-    if (btn) {
-      btn.innerHTML = "🤖 Groq AI is creating your affordable meal plan...";
-      btn.disabled = true;
+  // ── PDF button delegation ────────────────────────────────────────────────
+  document.addEventListener("click", e => {
+    if (e.target.closest("#btn-download-shopping-pdf")) {
+      const budget = parseInt(document.getElementById("budget-input").value, 10);
+      const familySize = parseInt(document.getElementById("family-size").value, 10);
+      const province = document.getElementById("province-select").value;
+      const condition = document.getElementById("condition-select").value;
+      downloadShoppingListPDF(currentShoppingList, budget, familySize, province, condition);
+    }
+    if (e.target.closest("#btn-download-full-pdf")) {
+      const budget = parseInt(document.getElementById("budget-input").value, 10);
+      const familySize = parseInt(document.getElementById("family-size").value, 10);
+      const province = document.getElementById("province-select").value;
+      const condition = document.getElementById("condition-select").value;
+      downloadFullPDF(currentShoppingList, budget, familySize, province, condition, currentDays, currentFallbackText, selectedDuration);
+    }
+  });
+
+  // ────────────────────────────────────────────────────────────────────────
+  // ZAMBIAN_PRICES_2026
+  // ────────────────────────────────────────────────────────────────────────
+  const ZAMBIAN_PRICES_2026 = {
+    staples: [
+      { name:"Nshima 2kg",       price:35, unit:"bag",    calories:"high",   forbidden:[] },
+      { name:"Rice 1kg",         price:40, unit:"bag",    calories:"high",   forbidden:[] },
+      { name:"Sweet Potato 1kg", price:20, unit:"kg",     calories:"medium", forbidden:[] },
+      { name:"Cassava 1kg",      price:15, unit:"kg",     calories:"medium", forbidden:["celiac"] },
+      { name:"Rolled Oats 500g", price:45, unit:"packet", calories:"medium", forbidden:[] },
+      { name:"Bread Loaf",       price:30, unit:"loaf",   calories:"high",   forbidden:["celiac","diabetes_type2"] },
+    ],
+    proteins: [
+      { name:"Kapenta Dried 1 cup",  price:50,  unit:"cup",    calories:"medium", forbidden:["gout"] },
+      { name:"Kapenta Fresh 1kg",    price:80,  unit:"kg",     calories:"medium", forbidden:["gout"] },
+      { name:"Bream Fish 1kg",       price:90,  unit:"kg",     calories:"medium", forbidden:[] },
+      { name:"Beans 1 cup",          price:25,  unit:"cup",    calories:"medium", forbidden:["kidney_disease"] },
+      { name:"Eggs 6 pieces",        price:30,  unit:"pieces", calories:"medium", forbidden:[] },
+      { name:"Chicken 1kg",          price:120, unit:"kg",     calories:"medium", forbidden:[] },
+      { name:"Beef 500g",            price:80,  unit:"piece",  calories:"medium", forbidden:["gout","heart_disease","cholesterol"] },
+      { name:"Soya Pieces 500g",     price:35,  unit:"packet", calories:"medium", forbidden:["thyroid"] },
+      { name:"Groundnuts 1 cup",     price:30,  unit:"cup",    calories:"high",   forbidden:["kidney_disease"] },
+      { name:"Peanut Butter 500g",   price:65,  unit:"jar",    calories:"high",   forbidden:["obesity","kidney_disease"] },
+      { name:"Tinned Sardines",      price:25,  unit:"tin",    calories:"medium", forbidden:["gout"] },
+    ],
+    vegetables: [
+      { name:"Rape 2 bunches",           price:10, unit:"bunches", calories:"low", forbidden:[] },
+      { name:"Cabbage 1 head",           price:15, unit:"head",    calories:"low", forbidden:["thyroid"] },
+      { name:"Tomatoes 1 plate",         price:10, unit:"plate",   calories:"low", forbidden:[] },
+      { name:"Onions 3 heads",           price:15, unit:"heads",   calories:"low", forbidden:[] },
+      { name:"Bondwe 2 bunches",         price:10, unit:"bunches", calories:"low", forbidden:[] },
+      { name:"Pumpkin Leaves 2 bunches", price:10, unit:"bunches", calories:"low", forbidden:[] },
+      { name:"Moringa Leaves 1 bunch",   price:10, unit:"bunch",   calories:"low", forbidden:[] },
+      { name:"Carrots 4 pieces",         price:10, unit:"pieces",  calories:"low", forbidden:[] },
+      { name:"Green Pepper 3 pieces",    price:10, unit:"pieces",  calories:"low", forbidden:[] },
+      { name:"Garlic 1 bulb",            price:10, unit:"bulb",    calories:"low", forbidden:[] },
+      { name:"Beetroot 2 pieces",        price:15, unit:"pieces",  calories:"low", forbidden:[] },
+    ],
+    fruits: [
+      { name:"Banana 1 bunch",   price:25, unit:"bunch",   calories:"medium", forbidden:["kidney_disease"] },
+      { name:"Orange 3 pieces",  price:15, unit:"pieces",  calories:"low",    forbidden:[] },
+      { name:"Guava 5 pieces",   price:10, unit:"pieces",  calories:"low",    forbidden:[] },
+      { name:"Pawpaw 1 piece",   price:20, unit:"piece",   calories:"low",    forbidden:[] },
+      { name:"Avocado 2 pieces", price:20, unit:"pieces",  calories:"medium", forbidden:["kidney_disease","obesity"] },
+      { name:"Lemon 3 pieces",   price:10, unit:"pieces",  calories:"low",    forbidden:[] },
+    ],
+    dairy: [
+      { name:"Milk 500ml",         price:25, unit:"bottle", calories:"medium", forbidden:["kidney_disease"] },
+      { name:"Lacto 500ml",        price:20, unit:"bottle", calories:"medium", forbidden:[] },
+      { name:"Yoghurt Plain 500ml",price:35, unit:"bottle", calories:"medium", forbidden:[] },
+    ],
+    cooking: [
+      { name:"Cooking Oil 750ml", price:45, unit:"bottle", calories:"high", forbidden:["obesity","heart_disease"] },
+      { name:"Salt 1kg",          price:15, unit:"packet", calories:"none", forbidden:["hypertension","kidney_disease"] },
+    ]
+  };
+
+  const CATEGORY_LABELS = {
+    proteins:"PROTEINS", vegetables:"VEGETABLES", staples:"STAPLES",
+    fruits:"FRUITS",     dairy:"DAIRY",            cooking:"COOKING ESSENTIALS"
+  };
+
+  const CATEGORY_ALLOCATIONS = {
+    proteins:0.35, vegetables:0.30, staples:0.15,
+    fruits:0.10,   dairy:0.05,      cooking:0.05
+  };
+
+  const CONDITION_LABELS = {
+    general:"No specific condition", diabetes_type2:"Diabetes (Type 2)",
+    hypertension:"Hypertension",     heart_disease:"Heart Disease",
+    kidney_disease:"Kidney Disease", obesity:"Obesity",
+    gout:"Gout",                     anemia:"Anaemia",
+    thyroid:"Thyroid Condition",     celiac:"Coeliac Disease",
+    cholesterol:"High Cholesterol",  pregnancy:"Pregnancy",
+    malnutrition:"Malnutrition"
+  };
+
+  // ── Markdown parser ──────────────────────────────────────────────────────
+  function parseMarkdown(text) {
+    if (!text) return "";
+    let html = text
+      .replace(/^### (.+)$/gm, '<h3 class="ai-heading-3">$1</h3>')
+      .replace(/^## (.+)$/gm,  '<h2 class="ai-heading-2">$1</h2>')
+      .replace(/^# (.+)$/gm,   '<h1 class="ai-heading-1">$1</h1>')
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.+?)\*/g,     "<em>$1</em>")
+      .replace(/^[\*\-] (.+)$/gm,  '<li class="ai-list-item">$1</li>')
+      .replace(/^\d+\. (.+)$/gm,   '<li class="ai-numbered-item">$1</li>')
+      .replace(/^---+$/gm,         '<hr class="ai-divider">')
+      .replace(/\n\n/g, '</p><p class="ai-paragraph">')
+      .replace(/\n/g,   "<br>");
+    html = html.replace(
+      /(<li class="ai-list-item">[\s\S]*?<\/li>(\s*<li class="ai-list-item">[\s\S]*?<\/li>)*)/g,
+      '<ul class="ai-list">$1</ul>'
+    );
+    html = html.replace(
+      /(<li class="ai-numbered-item">[\s\S]*?<\/li>(\s*<li class="ai-numbered-item">[\s\S]*?<\/li>)*)/g,
+      '<ol class="ai-numbered-list">$1</ol>'
+    );
+    return '<p class="ai-paragraph">' + html + "</p>";
+  }
+
+  // ── Shopping list logic ──────────────────────────────────────────────────
+  function normalizeCondition(c) {
+    if (!c || c === "general" || c === "none") return "";
+    return c.toLowerCase().replace(/\s+/g, "_");
+  }
+
+  function generateShoppingList(budget, condition) {
+    const cond = normalizeCondition(condition);
+    const categories = {};
+    let remainingBudget = budget;
+    let totalSpent = 0;
+
+    const catOrder = ["proteins","vegetables","staples","fruits","dairy","cooking"];
+
+    for (const catKey of catOrder) {
+      const items = ZAMBIAN_PRICES_2026[catKey];
+      if (!items) continue;
+
+      const allowed = items.filter(item => !item.forbidden.includes(cond));
+      if (allowed.length === 0) continue;
+
+      const sorted = [...allowed].sort((a, b) => a.price - b.price);
+      const catBudget = budget * CATEGORY_ALLOCATIONS[catKey];
+
+      if (sorted[0].price > remainingBudget) continue;
+
+      const selected = [];
+      let catSpent = 0;
+
+      selected.push(sorted[0]);
+      catSpent += sorted[0].price;
+
+      for (let i = 1; i < sorted.length; i++) {
+        if (catSpent + sorted[i].price <= catBudget && catSpent + sorted[i].price <= remainingBudget) {
+          selected.push(sorted[i]);
+          catSpent += sorted[i].price;
+        }
+      }
+
+      categories[catKey] = { items: selected, subtotal: catSpent };
+      totalSpent += catSpent;
+      remainingBudget -= catSpent;
     }
 
+    return { categories, totalSpent, change: budget - totalSpent };
+  }
+
+  // ── Display shopping list ────────────────────────────────────────────────
+  function displayShoppingList(shoppingList, budget, familySize, province, condition) {
     const container = document.getElementById("plan-result");
-    if (container) {
-      container.innerHTML = `
-        <div style="background:var(--bg-white);border-radius:var(--radius);padding:1.5rem;text-align:center;border:1px solid var(--border);box-shadow:var(--shadow-card);">
-          <div style="font-size:1.5rem;margin-bottom:0.5rem;">🤖</div>
-          <p style="font-size:0.9rem;color:var(--text-medium);">Groq AI is building your personalised ${duration} meal plan for a family of ${familySize} in ${province} Province…</p>
+    if (!container) return;
+
+    const condLabel = CONDITION_LABELS[condition] || condition;
+    const itemCount = Object.values(shoppingList.categories).reduce((s, c) => s + c.items.length, 0);
+
+    let categoriesHTML = "";
+    for (const [catKey, catData] of Object.entries(shoppingList.categories)) {
+      categoriesHTML += `
+        <div class="shopping-list-card">
+          <div class="shopping-list-header">${CATEGORY_LABELS[catKey] || catKey.toUpperCase()}</div>
+          ${catData.items.map(item => `
+            <div class="shopping-list-item">
+              <span class="shopping-item-name">${item.name}</span>
+              <span class="shopping-item-price">K${item.price}</span>
+            </div>`).join("")}
+          <div class="shopping-total-row">
+            <span>Subtotal</span>
+            <span>K${catData.subtotal}</span>
+          </div>
         </div>`;
-      container.classList.remove("hidden");
-      container.scrollIntoView({ behavior: "smooth" });
     }
+
+    const isOver = shoppingList.change < 0;
+    const changeColor = isOver ? "var(--accent-red)" : "var(--accent-green)";
+    const changeBg   = isOver ? "rgba(220,38,38,0.07)" : "rgba(13,153,84,0.07)";
+
+    container.innerHTML = `
+      <div class="budget-summary-card">
+        <h3>YOUR SHOPPING LIST</h3>
+        <div class="budget-summary-grid">
+          <div class="budget-summary-item">
+            <div class="budget-summary-label">Budget Entered</div>
+            <div class="budget-summary-value">K${budget}</div>
+          </div>
+          <div class="budget-summary-item">
+            <div class="budget-summary-label">Family Size</div>
+            <div class="budget-summary-value">${familySize} people</div>
+          </div>
+          <div class="budget-summary-item">
+            <div class="budget-summary-label">Province</div>
+            <div class="budget-summary-value" style="font-size:0.88rem;">${province}</div>
+          </div>
+          <div class="budget-summary-item">
+            <div class="budget-summary-label">Total Items</div>
+            <div class="budget-summary-value">${itemCount}</div>
+          </div>
+        </div>
+        <span class="condition-badge">${condLabel}</span>
+      </div>
+
+      ${categoriesHTML}
+
+      <div style="border-radius:var(--radius);overflow:hidden;margin-bottom:1rem;border:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;padding:0.875rem 1rem;background:var(--primary);color:white;font-weight:800;font-size:0.95rem;">
+          <span>Grand Total</span>
+          <span>K${shoppingList.totalSpent}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:0.75rem 1rem;background:${changeBg};font-weight:700;font-size:0.9rem;color:${changeColor};">
+          <span>${isOver ? "Over Budget" : "Change Remaining"}</span>
+          <span>K${Math.abs(shoppingList.change)}</span>
+        </div>
+      </div>
+
+      <button class="btn-secondary btn-full" id="btn-download-shopping-pdf" style="margin-bottom:1rem;gap:0.5rem;">
+        ⬇ Download Shopping List PDF
+      </button>
+
+      <div class="mb-tip-card">
+        <span>💡</span>
+        <div>Prices are based on 2026 Zambian market averages. Actual prices may vary by market, area and season.</div>
+      </div>
+    `;
+
+    container.classList.remove("hidden");
+    container.scrollIntoView({ behavior:"smooth" });
+  }
+
+  // ── Parse Groq meal plan response into day cards ─────────────────────────
+  function parseMealPlan(text) {
+    const days = [];
+    const blocks = text.split(/(?=\bDAY\s+\d+\b)/i);
+    const mealOrder = ["BREAKFAST","MORNING SNACK","LUNCH","AFTERNOON SNACK","SUPPER","SNACK"];
+
+    for (const block of blocks) {
+      const dayMatch = block.match(/\bDAY\s+(\d+)\b/i);
+      if (!dayMatch) continue;
+
+      const meals = {};
+      for (const line of block.split("\n")) {
+        const m = line.match(/^(BREAKFAST|LUNCH|SUPPER|MORNING SNACK|AFTERNOON SNACK|SNACK)\s*:\s*(.+)/i);
+        if (m) meals[m[1].toUpperCase()] = m[2].replace(/\*/g, "").trim();
+      }
+
+      if (Object.keys(meals).length > 0) {
+        days.push({ label:`DAY ${dayMatch[1]}`, meals, mealOrder });
+      }
+    }
+    return days;
+  }
+
+  function mealLabelShort(key) {
+    return key.replace("MORNING SNACK","AM SNACK").replace("AFTERNOON SNACK","PM SNACK");
+  }
+
+  // ── Display meal plan ────────────────────────────────────────────────────
+  function displayMealPlan(days, duration, familySize, fallbackText) {
+    const container = document.getElementById("meal-plan-result");
+    if (!container) return;
+
+    const MEAL_ORDER = ["BREAKFAST","MORNING SNACK","LUNCH","AFTERNOON SNACK","SUPPER","SNACK"];
+    let content = "";
+
+    if (days.length > 0) {
+      content = days.map(day => `
+        <div class="meal-day-card">
+          <div class="meal-day-header">${day.label}</div>
+          ${MEAL_ORDER.filter(k => day.meals[k]).map(k => `
+            <div class="meal-row">
+              <span class="meal-label">${mealLabelShort(k)}</span>
+              <span class="meal-foods">${day.meals[k]}</span>
+            </div>`).join("")}
+        </div>`).join("");
+    } else {
+      content = `<div class="ai-response-wrapper">${parseMarkdown(fallbackText)}</div>`;
+    }
+
+    container.innerHTML = `
+      <div class="mb-result-header" style="margin-bottom:0.875rem;">
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;">
+          <span>✨</span>
+          <strong style="font-size:1rem;">AI Meal Plan — ${duration} Days</strong>
+        </div>
+        <div style="font-size:0.8rem;opacity:0.85;">For ${familySize} people · using your exact shopping list</div>
+      </div>
+      ${content}
+      <button class="btn-green btn-full" id="btn-download-full-pdf" style="margin-top:1rem;margin-bottom:0.75rem;gap:0.5rem;">
+        ⬇ Download Full PDF (Shopping List + Meal Plan)
+      </button>
+      <div class="mb-tip-card">
+        <span>🌿</span>
+        <div>This meal plan uses only the items in your shopping list. Adjust quantities as needed for your family.</div>
+      </div>
+    `;
+
+    container.classList.remove("hidden");
+    container.scrollIntoView({ behavior:"smooth" });
+  }
+
+  // ── Groq: generate meal plan ─────────────────────────────────────────────
+  async function generateMealPlanAI(shoppingItems, condition, duration, familySize) {
+    const fiveMealConditions = ["diabetes_type2","pregnancy","obesity","malnutrition"];
+    const needsSnacks = fiveMealConditions.includes(normalizeCondition(condition));
+    const snackLine = needsSnacks
+      ? "\nMORNING SNACK: [snack]\nAFTERNOON SNACK: [snack]"
+      : "";
+
+    const userPrompt =
+      `Create a ${duration} day meal plan for a family of ${familySize} in Zambia.\n` +
+      `The person managing diet has ${condition}.\n` +
+      `Use ONLY these ingredients that were purchased:\n` +
+      `${shoppingItems.join(", ")}\n\n` +
+      `For EACH day show:\n` +
+      `BREAKFAST: [meal]\n` +
+      `LUNCH: [meal with nshima or staple]\n` +
+      `SUPPER: [meal with nshima or staple]${snackLine}\n\n` +
+      `Keep it practical. Use real Zambian meal names.\n` +
+      `Do not suggest any foods not in the shopping list.\n` +
+      `Do not use markdown asterisks.\n` +
+      `Format each day clearly as DAY 1, DAY 2 etc.`;
+
+    const response = await fetch(GROQ_URL, {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":`Bearer ${GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model:"llama-3.3-70b-versatile",
+        messages:[
+          {
+            role:"system",
+            content:"You are a certified Zambian nutritionist. Create practical meal plans using only the exact ingredients provided. All meals must use Zambian cooking methods. Keep language simple and clear."
+          },
+          { role:"user", content:userPrompt }
+        ],
+        temperature:0.7,
+        max_tokens: duration >= 30 ? 4096 : 2048
+      })
+    });
+
+    if (!response.ok) throw new Error(`Groq error ${response.status}`);
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+
+  // ── Form submit: Phase 1 ─────────────────────────────────────────────────
+  document.getElementById("budget-form").addEventListener("submit", e => {
+    e.preventDefault();
+
+    const budget = parseInt(document.getElementById("budget-input").value, 10);
+    if (!budget || budget < 50) {
+      const inp = document.getElementById("budget-input");
+      inp.style.borderColor = "var(--accent-red)";
+      inp.placeholder = "Please enter at least K50";
+      setTimeout(() => {
+        inp.style.borderColor = "";
+        inp.placeholder = "Enter your budget e.g. 500";
+      }, 2500);
+      return;
+    }
+
+    const familySize = parseInt(document.getElementById("family-size").value, 10);
+    const province   = document.getElementById("province-select").value;
+    const condition  = document.getElementById("condition-select").value;
+
+    currentShoppingList = generateShoppingList(budget, condition);
+    displayShoppingList(currentShoppingList, budget, familySize, province, condition);
+    document.getElementById("phase2-section").classList.remove("hidden");
+    document.getElementById("meal-plan-result").classList.add("hidden");
+    document.getElementById("meal-plan-result").innerHTML = "";
+  });
+
+  // ── Phase 2: Generate Meal Plan ──────────────────────────────────────────
+  document.getElementById("btn-generate-meals").addEventListener("click", async () => {
+    if (!currentShoppingList) return;
+
+    const familySize = parseInt(document.getElementById("family-size").value, 10);
+    const condition  = document.getElementById("condition-select").value;
+    const duration   = selectedDuration;
+
+    const shoppingItems = Object.values(currentShoppingList.categories)
+      .flatMap(cat => cat.items.map(item => item.name));
+
+    const btn = document.getElementById("btn-generate-meals");
+    const origHTML = btn.innerHTML;
+    btn.innerHTML = "🤖 AI is creating your meal plan...";
+    btn.disabled = true;
+
+    const mealContainer = document.getElementById("meal-plan-result");
+    mealContainer.innerHTML = `
+      <div style="background:var(--bg-white);border-radius:var(--radius);padding:2rem;text-align:center;border:1px solid var(--border);box-shadow:var(--shadow-card);margin-bottom:1rem;">
+        <div style="font-size:1.5rem;margin-bottom:0.75rem;">🤖</div>
+        <p style="font-size:0.9rem;font-weight:600;color:var(--text-dark);margin-bottom:0.25rem;">AI is creating your ${duration}-day meal plan…</p>
+        <p style="font-size:0.82rem;color:var(--text-medium);">Using your exact shopping list items.</p>
+      </div>`;
+    mealContainer.classList.remove("hidden");
+    mealContainer.scrollIntoView({ behavior:"smooth" });
 
     try {
-      const aiText = await generateBudgetPlan(budget, familySize, province, groqCondition, duration);
-
-      const formatted = aiText
-        .split(/\n{2,}/)
-        .map(para => `<p style="margin-bottom:0.75rem;line-height:1.7;font-size:0.875rem;">${para.replace(/\n/g,"<br>")}</p>`)
-        .join("");
-
-      if (container) {
-        container.innerHTML = `
-          <div class="mb-result-header" style="margin-bottom:0.875rem;">
-            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;">
-              <span style="font-size:1rem;">✨</span>
-              <strong style="font-size:1rem;">AI Meal Plan — ${duration} for ${familySize} people</strong>
-            </div>
-            <div style="font-size:0.8rem;opacity:0.85;">Budget: K${budget} &nbsp;·&nbsp; Province: ${province} &nbsp;·&nbsp; Condition: ${groqCondition}</div>
-          </div>
-          <div class="mb-meal-card" style="padding:1.25rem;">
-            ${formatted}
-          </div>
-          <div class="mb-tip-card" style="margin-top:0.75rem;">
-            <span>💡</span>
-            <div>Prices are based on 2026 Zambian market averages. Actual prices may vary by area, season, and market.</div>
-          </div>
-        `;
-      }
+      const aiText = await generateMealPlanAI(shoppingItems, condition, duration, familySize);
+      currentFallbackText = aiText;
+      currentDays = parseMealPlan(aiText);
+      displayMealPlan(currentDays, duration, familySize, aiText);
     } catch (err) {
-      if (container) {
-        container.innerHTML = `
-          <div style="background:rgba(220,38,38,0.06);border:1.5px solid rgba(220,38,38,0.25);border-radius:var(--radius);padding:1.25rem;text-align:center;">
-            <p style="color:var(--accent-red);font-size:0.9rem;">Something went wrong. Please check your connection and try again.</p>
-          </div>`;
-      }
+      mealContainer.innerHTML = `
+        <div style="background:rgba(220,38,38,0.06);border:1.5px solid rgba(220,38,38,0.25);border-radius:var(--radius);padding:1.25rem;text-align:center;">
+          <p style="color:var(--accent-red);font-size:0.9rem;">Something went wrong generating the meal plan. Please check your connection and try again.</p>
+        </div>`;
     } finally {
-      if (btn) { btn.innerHTML = originalHTML; btn.disabled = false; }
+      btn.innerHTML = origHTML;
+      btn.disabled = false;
     }
-  }, true); // capture phase
+  });
+
+  // ────────────────────────────────────────────────────────────────────────
+  // PDF helpers
+  // ────────────────────────────────────────────────────────────────────────
+
+  function pdfPageSetup(doc) {
+    return {
+      pageW: doc.internal.pageSize.getWidth(),
+      pageH: doc.internal.pageSize.getHeight(),
+      margin: 18,
+      contentW: doc.internal.pageSize.getWidth() - 36,
+      today: new Date().toLocaleDateString("en-ZM", { year:"numeric", month:"long", day:"numeric" })
+    };
+  }
+
+  function addShoppingPages(doc, shoppingList, budget, familySize, province, condition, startY) {
+    const { pageW, pageH, margin, contentW } = pdfPageSetup(doc);
+    const condLabel = CONDITION_LABELS[condition] || condition;
+    let y = startY;
+
+    for (const [catKey, catData] of Object.entries(shoppingList.categories)) {
+      if (y > pageH - 30) { doc.addPage(); y = 20; }
+
+      doc.setFillColor(240, 245, 255);
+      doc.rect(margin, y - 4, contentW, 9, "F");
+      doc.setTextColor(15, 77, 166);
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica","bold");
+      doc.text((CATEGORY_LABELS[catKey] || catKey).toUpperCase(), margin + 3, y + 2);
+      y += 10;
+
+      for (const item of catData.items) {
+        if (y > pageH - 18) { doc.addPage(); y = 20; }
+        doc.setTextColor(20, 30, 55);
+        doc.setFontSize(9);
+        doc.setFont("helvetica","normal");
+        doc.text(item.name, margin + 4, y);
+        doc.setTextColor(13, 153, 84);
+        doc.setFont("helvetica","bold");
+        doc.text(`K${item.price}`, pageW - margin, y, { align:"right" });
+        doc.setDrawColor(220, 232, 248);
+        doc.setLineWidth(0.2);
+        doc.line(margin + 4, y + 1.8, pageW - margin, y + 1.8);
+        y += 7;
+      }
+
+      doc.setTextColor(100, 120, 150);
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica","bold");
+      doc.text("Subtotal", margin + 4, y);
+      doc.text(`K${catData.subtotal}`, pageW - margin, y, { align:"right" });
+      y += 10;
+    }
+
+    if (y > pageH - 28) { doc.addPage(); y = 20; }
+
+    doc.setFillColor(15, 46, 82);
+    doc.rect(margin, y - 4, contentW, 10, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.setFont("helvetica","bold");
+    doc.text("GRAND TOTAL", margin + 4, y + 3);
+    doc.text(`K${shoppingList.totalSpent}`, pageW - margin, y + 3, { align:"right" });
+    y += 13;
+
+    const changeBg = shoppingList.change >= 0 ? [213, 245, 229] : [252, 220, 220];
+    const changeFg = shoppingList.change >= 0 ? [13, 153, 84]  : [220, 38, 38];
+    doc.setFillColor(...changeBg);
+    doc.rect(margin, y - 4, contentW, 10, "F");
+    doc.setTextColor(...changeFg);
+    doc.setFontSize(9.5);
+    doc.setFont("helvetica","bold");
+    doc.text(shoppingList.change >= 0 ? "Change Remaining" : "Over Budget", margin + 4, y + 3);
+    doc.text(`K${Math.abs(shoppingList.change)}`, pageW - margin, y + 3, { align:"right" });
+    y += 14;
+
+    return y;
+  }
+
+  // ── Download Shopping List PDF ───────────────────────────────────────────
+  function downloadShoppingListPDF(shoppingList, budget, familySize, province, condition) {
+    if (!shoppingList || !window.jspdf) return;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:"mm", format:"a4" });
+    const { pageW, pageH, margin, contentW, today } = pdfPageSetup(doc);
+    const condLabel = CONDITION_LABELS[condition] || condition;
+
+    doc.setFillColor(15, 46, 82);
+    doc.rect(0, 0, pageW, 26, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont("helvetica","bold");
+    doc.text("UMOYO360", margin, 15);
+    doc.setFontSize(9);
+    doc.setFont("helvetica","normal");
+    doc.text("Built in Zambia", pageW - margin, 15, { align:"right" });
+
+    doc.setTextColor(20, 30, 55);
+    doc.setFontSize(16);
+    doc.setFont("helvetica","bold");
+    doc.text("SHOPPING LIST", margin, 38);
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica","normal");
+    doc.setTextColor(67, 83, 115);
+    doc.text(`Date: ${today}   Name: ${userProfile.fullName}`, margin, 46);
+    doc.text(`Budget: K${budget}  |  Family: ${familySize} people  |  Province: ${province}  |  Condition: ${condLabel}`, margin, 52, { maxWidth: contentW });
+
+    doc.setDrawColor(214, 227, 245);
+    doc.setLineWidth(0.5);
+    doc.line(margin, 57, pageW - margin, 57);
+
+    addShoppingPages(doc, shoppingList, budget, familySize, province, condition, 65);
+
+    doc.setFillColor(15, 46, 82);
+    doc.rect(0, pageH - 14, pageW, 14, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont("helvetica","bold");
+    doc.text("UMOYO360 2026", margin, pageH - 5);
+    doc.setFont("helvetica","normal");
+    doc.text("Built in Zambia", pageW - margin, pageH - 5, { align:"right" });
+
+    doc.save(`Umoyo360_ShoppingList_${new Date().toISOString().slice(0,10)}.pdf`);
+  }
+
+  // ── Download Full PDF (cover + shopping list + meal plan + disclaimer) ───
+  function downloadFullPDF(shoppingList, budget, familySize, province, condition, days, fallbackText, duration) {
+    if (!shoppingList || !window.jspdf) return;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:"mm", format:"a4" });
+    const { pageW, pageH, margin, contentW, today } = pdfPageSetup(doc);
+    const condLabel = CONDITION_LABELS[condition] || condition;
+
+    // ── Cover ──────────────────────────────────────────────────────────────
+    doc.setFillColor(15, 46, 82);
+    doc.rect(0, 0, pageW, pageH, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(34);
+    doc.setFont("helvetica","bold");
+    doc.text("UMOYO360", pageW / 2, 60, { align:"center" });
+    doc.setFontSize(14);
+    doc.setFont("helvetica","normal");
+    doc.text("Your Budget Meal Plan", pageW / 2, 72, { align:"center" });
+    doc.setDrawColor(255, 255, 255);
+    doc.setLineWidth(0.4);
+    doc.line(margin + 20, 79, pageW - margin - 20, 79);
+    doc.setFontSize(11);
+    doc.setFont("helvetica","bold");
+    doc.text(`Name: ${userProfile.fullName}`, pageW / 2, 91, { align:"center" });
+    doc.setFontSize(10);
+    doc.setFont("helvetica","normal");
+    doc.text(`Condition: ${condLabel}`, pageW / 2, 99, { align:"center" });
+    doc.text(`Date: ${today}`, pageW / 2, 107, { align:"center" });
+    doc.text(`Budget: K${budget}  |  Family: ${familySize} people  |  Province: ${province}`, pageW / 2, 115, { align:"center" });
+
+    // ── Shopping List page ─────────────────────────────────────────────────
+    doc.addPage();
+    doc.setFillColor(15, 46, 82);
+    doc.rect(0, 0, pageW, 22, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(13);
+    doc.setFont("helvetica","bold");
+    doc.text("SHOPPING LIST", margin, 14);
+    doc.setFontSize(9);
+    doc.setFont("helvetica","normal");
+    doc.text(`K${budget} budget  |  ${familySize} people  |  ${province}`, pageW - margin, 14, { align:"right" });
+
+    addShoppingPages(doc, shoppingList, budget, familySize, province, condition, 30);
+
+    // ── Meal Plan pages ────────────────────────────────────────────────────
+    doc.addPage();
+    doc.setFillColor(15, 46, 82);
+    doc.rect(0, 0, pageW, 22, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(13);
+    doc.setFont("helvetica","bold");
+    doc.text(`${duration}-DAY MEAL PLAN`, margin, 14);
+    doc.setFontSize(9);
+    doc.setFont("helvetica","normal");
+    doc.text(`For ${familySize} people  |  ${condLabel}`, pageW - margin, 14, { align:"right" });
+
+    const MEAL_ORDER = ["BREAKFAST","MORNING SNACK","LUNCH","AFTERNOON SNACK","SUPPER","SNACK"];
+    const daysPerPage = duration <= 7 ? 2 : 3;
+    let y = 30;
+    let daysOnPage = 0;
+
+    if (days.length > 0) {
+      for (const day of days) {
+        const estimatedHeight = 12 + Object.keys(day.meals).length * 7;
+        if (daysOnPage >= daysPerPage || y + estimatedHeight > pageH - 20) {
+          doc.addPage();
+          y = 20;
+          daysOnPage = 0;
+        }
+
+        doc.setFillColor(15, 77, 166);
+        doc.rect(margin, y - 4, contentW, 9, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(9.5);
+        doc.setFont("helvetica","bold");
+        doc.text(day.label, margin + 4, y + 2);
+        y += 11;
+
+        for (const mKey of MEAL_ORDER) {
+          if (!day.meals[mKey]) continue;
+          if (y > pageH - 14) { doc.addPage(); y = 20; }
+          doc.setTextColor(15, 77, 166);
+          doc.setFontSize(8);
+          doc.setFont("helvetica","bold");
+          doc.text(mKey + ":", margin + 4, y);
+          doc.setTextColor(20, 30, 55);
+          doc.setFont("helvetica","normal");
+          const lines = doc.splitTextToSize(day.meals[mKey], contentW - 36);
+          doc.text(lines, margin + 36, y);
+          y += lines.length * 5 + 2;
+        }
+
+        y += 5;
+        daysOnPage++;
+      }
+    } else {
+      // Fallback plain text
+      const lines = doc.splitTextToSize(fallbackText.replace(/\*/g,""), contentW);
+      doc.setTextColor(20, 30, 55);
+      doc.setFontSize(9);
+      doc.setFont("helvetica","normal");
+      for (const line of lines) {
+        if (y > pageH - 14) { doc.addPage(); y = 20; }
+        doc.text(line, margin, y);
+        y += 5;
+      }
+    }
+
+    // ── Disclaimer page ────────────────────────────────────────────────────
+    doc.addPage();
+    doc.setFillColor(248, 250, 253);
+    doc.rect(0, 0, pageW, pageH, "F");
+    doc.setTextColor(15, 77, 166);
+    doc.setFontSize(13);
+    doc.setFont("helvetica","bold");
+    doc.text("Nutrition Note & Health Disclaimer", margin, 28);
+
+    const notes = [
+      `This meal plan was designed for a person with ${condLabel} using a K${budget} weekly budget.`,
+      "All meals use ingredients available at Zambian markets and traditional Zambian cooking methods.",
+      "",
+      "DISCLAIMER:",
+      "These meal plans and shopping lists are generated for general nutritional guidance only.",
+      "Always consult a qualified health professional or registered dietitian for personalised",
+      "medical nutrition advice, especially if you have a serious health condition.",
+      "",
+      "Prices and food availability may vary by region, market and season across Zambia."
+    ];
+    notes.forEach((line, i) => {
+      if (line === "DISCLAIMER:") {
+        doc.setFont("helvetica","bold");
+        doc.setTextColor(15, 77, 166);
+      } else {
+        doc.setFont("helvetica","normal");
+        doc.setTextColor(67, 83, 115);
+      }
+      doc.setFontSize(9.5);
+      doc.text(line, margin, 40 + i * 7);
+    });
+
+    doc.setFillColor(15, 46, 82);
+    doc.rect(0, pageH - 14, pageW, 14, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont("helvetica","bold");
+    doc.text("UMOYO360 2026", margin, pageH - 5);
+    doc.setFont("helvetica","normal");
+    doc.text("Built in Zambia", pageW - margin, pageH - 5, { align:"right" });
+
+    doc.save(`Umoyo360_MealPlan_${new Date().toISOString().slice(0,10)}.pdf`);
+  }
 </script>
 </body>
 </html>

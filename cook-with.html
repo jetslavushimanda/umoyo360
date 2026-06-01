@@ -97,6 +97,21 @@
       .cw-ingredients-section { grid-template-columns:1fr; }
     }
     .icon { display:inline-block; vertical-align:middle; }
+
+    /* AI response styles */
+    .ai-response-wrapper { display:flex; flex-direction:column; gap:0; }
+    .ai-heading-1 { font-size:1.1rem; font-weight:800; color:var(--primary); margin:1rem 0 0.5rem; padding-bottom:0.4rem; border-bottom:2px solid var(--primary); letter-spacing:-0.02em; }
+    .ai-heading-2 { font-size:1rem; font-weight:700; color:var(--primary); margin:0.875rem 0 0.4rem; display:flex; align-items:center; gap:0.4rem; }
+    .ai-heading-2::before { content:""; display:inline-block; width:4px; height:16px; background:var(--primary); border-radius:2px; }
+    .ai-heading-3 { font-size:0.78rem; font-weight:700; color:var(--text-medium); margin:0.75rem 0 0.35rem; text-transform:uppercase; letter-spacing:0.04em; }
+    .ai-paragraph { font-size:0.88rem; color:var(--text-dark); line-height:1.7; margin:0.35rem 0; }
+    .ai-list { margin:0.4rem 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:0.3rem; }
+    .ai-list-item { font-size:0.85rem; color:var(--text-dark); line-height:1.5; padding:0.35rem 0.65rem; background:var(--bg-surface); border-radius:8px; border-left:3px solid var(--accent-green); display:flex; align-items:flex-start; gap:0.4rem; }
+    .ai-list-item::before { content:"→"; color:var(--accent-green); font-weight:700; flex-shrink:0; font-size:0.8rem; margin-top:1px; }
+    .ai-numbered-list { margin:0.4rem 0; padding:0; list-style:none; counter-reset:ai-counter; display:flex; flex-direction:column; gap:0.4rem; }
+    .ai-numbered-item { font-size:0.85rem; color:var(--text-dark); line-height:1.55; padding:0.5rem 0.75rem; background:var(--bg-white); border:1px solid var(--border); border-radius:10px; counter-increment:ai-counter; display:flex; align-items:flex-start; gap:0.625rem; }
+    .ai-numbered-item::before { content:counter(ai-counter); min-width:24px; height:24px; background:var(--primary); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; flex-shrink:0; }
+    .ai-divider { border:none; border-top:1px solid var(--border); margin:0.75rem 0; }
   </style>
 </head>
 <body class="cw-page">
@@ -149,6 +164,30 @@
 <script type="module">
   import { requireAuth, loadUserProfile } from "./js/utils.js";
   import { generateRecipes } from "./js/groq.js";
+
+  function parseMarkdown(text) {
+    if (!text) return "";
+    let html = text
+      .replace(/^### (.+)$/gm, '<h3 class="ai-heading-3">$1</h3>')
+      .replace(/^## (.+)$/gm,  '<h2 class="ai-heading-2">$1</h2>')
+      .replace(/^# (.+)$/gm,   '<h1 class="ai-heading-1">$1</h1>')
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.+?)\*/g,     "<em>$1</em>")
+      .replace(/^[\*\-] (.+)$/gm,  '<li class="ai-list-item">$1</li>')
+      .replace(/^\d+\. (.+)$/gm,   '<li class="ai-numbered-item">$1</li>')
+      .replace(/^---+$/gm,         '<hr class="ai-divider">')
+      .replace(/\n\n/g, '</p><p class="ai-paragraph">')
+      .replace(/\n/g,   "<br>");
+    html = html.replace(
+      /(<li class="ai-list-item">[\s\S]*?<\/li>(\s*<li class="ai-list-item">[\s\S]*?<\/li>)*)/g,
+      '<ul class="ai-list">$1</ul>'
+    );
+    html = html.replace(
+      /(<li class="ai-numbered-item">[\s\S]*?<\/li>(\s*<li class="ai-numbered-item">[\s\S]*?<\/li>)*)/g,
+      '<ol class="ai-numbered-list">$1</ol>'
+    );
+    return '<p class="ai-paragraph">' + html + "</p>";
+  }
 
   let groqProfile = { condition: "general", familySize: 4, fullName: "User" };
   let lastAiText = "";
@@ -215,7 +254,7 @@
               <div class="cw-recipe-meta">
                 <span class="cw-recipe-difficulty" style="color:#7C3AED;">✨ AI Recipe ${i + 1}</span>
               </div>
-              <div style="font-size:0.875rem;color:var(--text-dark);line-height:1.7;white-space:pre-wrap;">${block.trim()}</div>
+              <div class="ai-response-wrapper">${parseMarkdown(block.trim())}</div>
             </div>
           </div>
         `).join("");
