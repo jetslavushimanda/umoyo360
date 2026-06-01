@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -10,6 +10,219 @@
   <style>
     .module-icon svg { width:28px; height:28px; stroke:var(--primary); }
     .icon { display:inline-block; vertical-align:middle; }
+
+    /* ── Welcome Banner ──────────────────────────────────────────────── */
+    .wb-card {
+      background: linear-gradient(135deg, #0F2952 0%, #0B3D85 60%, #0F4DA6 100%);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.375rem;
+      margin-bottom: 1rem;
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(11,61,133,0.35);
+    }
+    .wb-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.875rem;
+    }
+    .wb-greeting {
+      font-size: 0.82rem;
+      opacity: 0.78;
+      font-weight: 500;
+      margin-bottom: 0.2rem;
+      letter-spacing: 0.01em;
+    }
+    .wb-name-line {
+      font-size: 1.2rem;
+      font-weight: 800;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+    }
+    .wb-day-box {
+      text-align: center;
+      background: rgba(255,255,255,0.13);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: var(--radius-sm);
+      padding: 0.5rem 0.875rem;
+      min-width: 68px;
+      flex-shrink: 0;
+    }
+    .wb-days-num {
+      display: block;
+      font-size: 1.75rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .wb-days-lbl {
+      display: block;
+      font-size: 0.6rem;
+      opacity: 0.72;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 0.2rem;
+      line-height: 1.3;
+    }
+    .wb-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .wb-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.22rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.73rem;
+      font-weight: 600;
+    }
+    .wb-badge-loc {
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.9);
+    }
+    .wb-badge-cond {
+      background: rgba(255,255,255,0.22);
+      border: 1px solid rgba(255,255,255,0.32);
+      color: #fff;
+    }
+    .wb-badge-bmi {
+      background: rgba(13,153,84,0.25);
+      border: 1px solid rgba(13,153,84,0.4);
+      color: #6FDFB0;
+    }
+
+    /* ── Daily Health Tip ────────────────────────────────────────────── */
+    .tip-card {
+      background: var(--bg-white);
+      border-left: 4px solid #C8960C;
+      border-top: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.875rem 1.125rem;
+      margin-bottom: 1.375rem;
+      box-shadow: var(--shadow-card);
+    }
+    .tip-label {
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #C8960C;
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .tip-text {
+      font-size: 0.875rem;
+      color: var(--text-dark);
+      line-height: 1.65;
+    }
+
+    /* ── Category labels ─────────────────────────────────────────────── */
+    .cat-label {
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-light);
+      margin: 1.375rem 0 0.5rem;
+      padding-left: 0.125rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .cat-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Force 2 columns on all sizes for category grids */
+    .cat-grid {
+      grid-template-columns: 1fr 1fr !important;
+      margin-bottom: 0;
+    }
+
+    /* ── Category icon accent colors ─────────────────────────────────── */
+    .cat-eat .module-icon { background: rgba(13,153,84,0.09); }
+    .cat-eat .module-icon svg { stroke: var(--accent-green); }
+    .cat-eat .module-card:hover .module-icon { background: var(--accent-green); }
+    .cat-eat .module-card::before { background: linear-gradient(90deg, var(--accent-green), #4ADE80); }
+    .cat-eat .module-cta { color: var(--accent-green); }
+
+    .cat-health .module-icon { background: rgba(217,119,6,0.09); }
+    .cat-health .module-icon svg { stroke: var(--accent-orange); }
+    .cat-health .module-card:hover .module-icon { background: var(--accent-orange); }
+    .cat-health .module-card::before { background: linear-gradient(90deg, var(--accent-orange), #FBBF24); }
+    .cat-health .module-cta { color: var(--accent-orange); }
+
+    .cat-ai .module-icon { background: rgba(8,145,178,0.09); }
+    .cat-ai .module-icon svg { stroke: var(--secondary); }
+    .cat-ai .module-card:hover .module-icon { background: var(--secondary); }
+    .cat-ai .module-card::before { background: linear-gradient(90deg, var(--secondary), #67E8F9); }
+    .cat-ai .module-cta { color: var(--secondary); }
+
+    /* ── AI Badge ────────────────────────────────────────────────────── */
+    .ai-badge {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.6rem;
+      background: linear-gradient(135deg, #4A6CF7 0%, #7C3AED 100%);
+      color: #fff;
+      font-size: 0.58rem;
+      font-weight: 800;
+      padding: 0.15rem 0.45rem;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1.4;
+    }
+
+    /* ── Coming Soon card ────────────────────────────────────────────── */
+    .coming-soon-card {
+      background: var(--bg-surface);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 1.125rem 1.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: 1.375rem;
+      margin-bottom: 1.375rem;
+      opacity: 0.72;
+      cursor: not-allowed;
+      user-select: none;
+    }
+    .cs-body { display: flex; align-items: center; gap: 0.875rem; }
+    .cs-icon { font-size: 1.6rem; flex-shrink: 0; }
+    .cs-title { font-size: 0.875rem; font-weight: 700; color: var(--text-medium); margin-bottom: 0.2rem; }
+    .cs-desc { font-size: 0.76rem; color: var(--text-light); line-height: 1.45; }
+    .cs-soon {
+      background: var(--bg-light);
+      border: 1.5px solid var(--border);
+      color: var(--text-light);
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 0.3rem 0.75rem;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 400px) {
+      .wb-days-num { font-size: 1.4rem; }
+      .wb-name-line { font-size: 1.05rem; }
+    }
   </style>
 </head>
 <body class="dashboard-page">
@@ -20,28 +233,62 @@
     <div class="user-greeting">Welcome, <strong id="user-name">...</strong></div>
     <span class="location-badge" id="location-badge">Loading...</span>
     <span class="badge badge-condition" id="condition-badge">...</span>
-    <button class="btn-danger" id="btn-logout" style="padding:0.4rem 0.875rem;font-size:0.8rem;display:flex;align-items:center;gap:0.4rem;" id="logout-btn"></button>
+    <button class="btn-danger" id="btn-logout" style="padding:0.4rem 0.875rem;font-size:0.8rem;display:flex;align-items:center;gap:0.4rem;"></button>
   </div>
 </header>
 
 <main class="dashboard-body">
-  <div class="module-grid">
+
+  <!-- Welcome Banner -->
+  <div class="wb-card">
+    <div class="wb-top">
+      <div>
+        <div class="wb-greeting" id="wb-greeting">Good morning</div>
+        <div class="wb-name-line">Hello, <span id="wb-name">...</span>! 👋</div>
+      </div>
+      <div class="wb-day-box">
+        <span class="wb-days-num" id="wb-days">—</span>
+        <span class="wb-days-lbl">Days on<br>Umoyo360</span>
+      </div>
+    </div>
+    <div class="wb-badges">
+      <span class="wb-badge wb-badge-loc" id="wb-location">📍 Loading...</span>
+      <span class="wb-badge wb-badge-cond" id="wb-condition">...</span>
+      <span class="wb-badge wb-badge-bmi hidden" id="wb-bmi">BMI —</span>
+    </div>
+  </div>
+
+  <!-- Daily Health Tip -->
+  <div class="tip-card">
+    <div class="tip-label">💡 Today's Health Tip</div>
+    <p class="tip-text" id="tip-text">Loading your personalised tip...</p>
+  </div>
+
+  <!-- EAT RIGHT -->
+  <div class="cat-label">🥦 Eat Right</div>
+  <div class="module-grid cat-grid cat-eat">
     <a href="meal-planner.html" class="module-card">
       <div class="module-icon" id="icon-meal"></div>
       <h3>Meal Planner</h3>
-      <p class="module-desc">Get your personalized nutrition plan using foods you have at home.</p>
+      <p class="module-desc">Get your personalised nutrition plan using foods you have at home.</p>
       <span class="module-cta">Open Planner →</span>
     </a>
-    <a href="education.html" class="module-card">
-      <div class="module-icon" id="icon-edu"></div>
-      <h3>Health Education</h3>
-      <p class="module-desc">Learn about your condition and how to prevent disease through nutrition.</p>
-      <span class="module-cta">Learn Now →</span>
+    <a href="meal-budget.html" class="module-card">
+      <div class="module-icon" id="icon-budget"></div>
+      <span class="ai-badge">AI</span>
+      <h3>Budget Planner</h3>
+      <p class="module-desc">AI-powered meal plan within your Kwacha budget for your whole family.</p>
+      <span class="module-cta">Plan Budget →</span>
     </a>
+  </div>
+
+  <!-- KNOW YOUR HEALTH -->
+  <div class="cat-label">📊 Know Your Health</div>
+  <div class="module-grid cat-grid cat-health">
     <a href="bmi-calculator.html" class="module-card">
       <div class="module-icon" id="icon-bmi"></div>
       <h3>BMI Calculator</h3>
-      <p class="module-desc">Calculate your Body Mass Index and get personalized health advice.</p>
+      <p class="module-desc">Calculate your Body Mass Index and get personalised health advice.</p>
       <span class="module-cta">Calculate →</span>
     </a>
     <a href="risk-assessment.html" class="module-card">
@@ -50,46 +297,34 @@
       <p class="module-desc">Find out your personal risk level for 14 diet-related conditions.</p>
       <span class="module-cta">Assess Risk →</span>
     </a>
+  </div>
+
+  <!-- AI POWERED -->
+  <div class="cat-label">✨ AI Powered</div>
+  <div class="module-grid cat-grid cat-ai">
     <a href="symptom-nutrition.html" class="module-card">
       <div class="module-icon" id="icon-symptom"></div>
+      <span class="ai-badge">AI</span>
       <h3>Symptom Checker</h3>
       <p class="module-desc">Identify nutritional deficiencies from your symptoms and get Zambian food advice.</p>
       <span class="module-cta">Check Symptoms →</span>
     </a>
     <a href="cook-with.html" class="module-card">
       <div class="module-icon" id="icon-cook"></div>
+      <span class="ai-badge">AI</span>
       <h3>Cook With What You Have</h3>
-      <p class="module-desc">Select the ingredients at home and get instant Zambian recipe ideas.</p>
+      <p class="module-desc">Select ingredients at home and get instant AI-generated Zambian recipe ideas.</p>
       <span class="module-cta">Find Recipes →</span>
     </a>
-    <a href="pregnancy-nutrition.html" class="module-card">
-      <div class="module-icon" id="icon-pregnancy"></div>
-      <h3>Pregnancy Nutrition</h3>
-      <p class="module-desc">Trimester-by-trimester food advice and danger signs for mothers and babies.</p>
-      <span class="module-cta">View Guide →</span>
-    </a>
-    <a href="child-growth.html" class="module-card">
-      <div class="module-icon" id="icon-child"></div>
-      <h3>Child Growth Tracker</h3>
-      <p class="module-desc">Check your child's growth against WHO standards and get age-specific feeding advice.</p>
-      <span class="module-cta">Track Growth →</span>
-    </a>
-    <a href="meal-budget.html" class="module-card">
-      <div class="module-icon" id="icon-budget"></div>
-      <h3>Meal Budget Planner</h3>
-      <p class="module-desc">Get the most nutritious meals within your daily budget in Zambian Kwacha.</p>
-      <span class="module-cta">Plan Budget →</span>
-    </a>
-    <a href="medication-food.html" class="module-card">
-      <div class="module-icon" id="icon-medication"></div>
-      <h3>Medication &amp; Food</h3>
-      <p class="module-desc">Know which foods to eat or avoid with your ARVs, diabetes, BP, or TB medication.</p>
-      <span class="module-cta">Check Now →</span>
-    </a>
+  </div>
+
+  <!-- DISCOVER AND LEARN -->
+  <div class="cat-label">📚 Discover &amp; Learn</div>
+  <div class="module-grid cat-grid">
     <a href="nutrition-quiz.html" class="module-card">
       <div class="module-icon" id="icon-quiz"></div>
       <h3>Nutrition Quiz</h3>
-      <p class="module-desc">Test your knowledge of Zambian nutrition with 10 daily questions and learn new facts.</p>
+      <p class="module-desc">Test your knowledge of Zambian nutrition with daily questions and learn new facts.</p>
       <span class="module-cta">Take Quiz →</span>
     </a>
     <a href="profile.html" class="module-card">
@@ -98,6 +333,18 @@
       <p class="module-desc">View and update your health profile and account settings.</p>
       <span class="module-cta">View Profile →</span>
     </a>
+  </div>
+
+  <!-- Coming Soon -->
+  <div class="coming-soon-card" aria-disabled="true">
+    <div class="cs-body">
+      <div class="cs-icon">📱</div>
+      <div>
+        <div class="cs-title">Health Device Sync</div>
+        <div class="cs-desc">Connect Apple Health or Google Fit to sync your daily activity and vitals automatically.</div>
+      </div>
+    </div>
+    <span class="cs-soon">Soon</span>
   </div>
 
   <div class="stats-section">
@@ -111,6 +358,7 @@
   </div>
 </main>
 
+<!-- Existing Firebase/auth script — unchanged -->
 <script type="module">
   import { requireAuth, loadUserProfile, formatDate, getConditionBadgeColor } from "./js/utils.js";
   import { getConditionById } from "./js/conditions.js";
@@ -121,15 +369,11 @@
 
   // Inject SVG icons
   document.getElementById("icon-meal").innerHTML = icon("mealPlanner", 28);
-  document.getElementById("icon-edu").innerHTML = icon("education", 28);
   document.getElementById("icon-bmi").innerHTML = icon("bmi", 28);
   document.getElementById("icon-risk").innerHTML      = icon("risk", 28);
   document.getElementById("icon-symptom").innerHTML   = icon("symptom", 28);
   document.getElementById("icon-cook").innerHTML      = icon("cook", 28);
-  document.getElementById("icon-pregnancy").innerHTML = icon("pregnancy", 28);
-  document.getElementById("icon-child").innerHTML     = icon("child", 28);
   document.getElementById("icon-budget").innerHTML    = icon("budget", 28);
-  document.getElementById("icon-medication").innerHTML= icon("medication", 28);
   document.getElementById("icon-quiz").innerHTML      = icon("quiz", 28);
   document.getElementById("icon-profile").innerHTML = icon("profile", 28);
   document.getElementById("btn-logout").innerHTML = icon("logout", 16) + " Logout";
@@ -158,6 +402,105 @@
       document.getElementById("btn-logout").addEventListener("click", () => { if (confirm("Logout?")) logoutUser(); });
     } catch { /* redirected */ }
   })();
+</script>
+
+<!-- Welcome banner + health tip population -->
+<script type="module">
+  import { requireAuth, loadUserProfile } from "./js/utils.js";
+  import { getConditionById } from "./js/conditions.js";
+
+  const HEALTH_TIPS = {
+    diabetes: [
+      "Eat beans or lentils at every meal today — they digest slowly and help prevent blood sugar spikes. Moringa leaves also help control blood sugar naturally.",
+      "Replace white nshima with sweet potato today. Sweet potato has a lower glycaemic index and provides Vitamin A at the same time.",
+      "Walk for 20 minutes after your biggest meal. This simple habit lowers blood sugar more effectively than many medications.",
+      "Eat small meals 5 times a day instead of 2 large ones. This prevents the blood sugar highs and crashes that cause fatigue.",
+      "Remove the skin from chicken before cooking. Reducing saturated fat helps insulin work more effectively in your body.",
+      "Add okra (delele) to your relish today. Its natural gel slows sugar absorption and is excellent for blood sugar control.",
+      "Drink water before each meal instead of juice or fizzy drinks. Staying hydrated reduces food cravings and supports kidney health.",
+    ],
+    hypertension: [
+      "Use iodized salt only today — and use less of it. High sodium directly raises blood pressure. Try lemon or tomato for flavour instead.",
+      "Eat a banana today. Potassium in bananas helps your kidneys remove excess sodium, naturally lowering blood pressure.",
+      "Eat beans with every supper this week. Beans reduce blood pressure by providing potassium, magnesium, and plant protein together.",
+      "Avoid adding salt at the table. The sodium in cooking is usually enough. Taste your food before adding any salt.",
+      "Eat moringa leaves three times this week. Studies show moringa helps reduce high blood pressure through its rich mineral content.",
+      "Choose grilled or boiled fish over fried foods today. Omega-3 fats in fish reduce inflammation that contributes to high blood pressure.",
+      "Eat a handful of groundnuts as your afternoon snack. Magnesium in groundnuts relaxes blood vessel walls and supports healthy pressure.",
+    ],
+    anaemia: [
+      "Eat kapenta today — the tiny bones are packed with calcium and the fish itself is rich in iron. Never remove the bones when eating kapenta.",
+      "Always pair iron foods with Vitamin C. Eat guava or orange alongside your beans, kapenta, or dark greens to double iron absorption.",
+      "Cook in a cast iron pot today if you have one. Acids from tomatoes and vegetables draw extra iron from the pot into your food.",
+      "Drink moringa leaf tea between meals. One tablespoon of moringa powder provides as much iron as many supplements.",
+      "Avoid tea or coffee for one hour before and after eating. These drinks block iron absorption — water or fresh juice is better with meals.",
+      "Add pumpkin leaves (chibwabwa) to your relish today. Dark green leaves are among the richest plant sources of iron available in Zambia.",
+      "Eat beef liver once this week. A small portion of liver provides more iron and B12 than almost any other food available in Zambia.",
+    ],
+    gastritis: [
+      "Eat small, frequent meals every 3 hours today. Keeping food in your stomach reduces acid irritation of the stomach lining.",
+      "Avoid chili, very spicy foods, and tomatoes today if your stomach is painful. These increase acid production and worsen gastritis.",
+      "Eat plain boiled rice or porridge as your first meal. Bland, soft foods soothe the stomach lining and reduce inflammation.",
+      "Drink water 30 minutes before meals, not during. This prevents diluting digestive enzymes and reduces bloating and acid reflux.",
+      "Try boiled sweet potato or banana as a snack. These gentle foods are alkaline and help neutralise excess stomach acid.",
+      "Avoid eating large meals late at night. Your stomach produces more acid when lying down after a large meal.",
+      "Eat yoghurt today if available. The probiotics in yoghurt help restore healthy gut bacteria that protect the stomach lining.",
+    ],
+    general: [
+      "Eat a rainbow of colours today — one orange, one green, and one yellow food. Each colour provides different vitamins your body needs.",
+      "Drink 8 glasses of water today. Many Zambians confuse thirst with hunger, and proper hydration improves energy and concentration.",
+      "Add moringa leaves to your relish today. Just a handful provides iron, Vitamin A, Vitamin C, calcium, and protein all in one.",
+      "Eat one fruit today — guava is the best value in Zambia, with more Vitamin C than an orange at a fraction of the cost.",
+      "Try replacing one nshima meal with sweet potato this week. It provides more vitamins and has a lower glycaemic index.",
+      "Add a handful of groundnuts to your lunch today. They provide healthy fats, protein, and magnesium that most Zambian diets lack.",
+      "Cook vegetables for 5 minutes or less to keep their vitamins intact. Overcooking destroys up to 80% of Vitamin C and folate.",
+    ],
+  };
+
+  // Set time greeting immediately
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const greetEl = document.getElementById("wb-greeting");
+  if (greetEl) greetEl.textContent = greeting;
+
+  try {
+    const user = await requireAuth();
+    const profile = await loadUserProfile(user.uid);
+    if (!profile) return;
+
+    const condition = getConditionById(profile.condition);
+    const firstName = profile.fullName?.split(" ")[0] || "User";
+
+    const nameEl = document.getElementById("wb-name");
+    if (nameEl) nameEl.textContent = firstName;
+
+    const locEl = document.getElementById("wb-location");
+    if (locEl) locEl.textContent = `📍 ${profile.district}, ${profile.province}`;
+
+    const condEl = document.getElementById("wb-condition");
+    if (condEl) condEl.textContent = condition?.shortName || "Healthy";
+
+    if (profile.bmi) {
+      const bmiEl = document.getElementById("wb-bmi");
+      if (bmiEl) { bmiEl.textContent = `BMI ${profile.bmi}`; bmiEl.classList.remove("hidden"); }
+    }
+
+    // Day counter
+    if (profile.createdAt) {
+      const created = profile.createdAt.toDate ? profile.createdAt.toDate() : new Date(profile.createdAt);
+      const days = Math.max(0, Math.floor((Date.now() - created.getTime()) / 86400000));
+      const daysEl = document.getElementById("wb-days");
+      if (daysEl) daysEl.textContent = days;
+    }
+
+    // Daily health tip — rotates by day of month
+    const condKey = profile.condition || "general";
+    const tips = HEALTH_TIPS[condKey] || HEALTH_TIPS.general;
+    const tipIndex = (new Date().getDate() - 1) % tips.length;
+    const tipEl = document.getElementById("tip-text");
+    if (tipEl) tipEl.textContent = tips[tipIndex];
+
+  } catch { /* silent — already redirected by first script if not authed */ }
 </script>
 </body>
 </html>

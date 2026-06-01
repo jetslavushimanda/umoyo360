@@ -84,7 +84,36 @@
         <input type="hidden" id="family-size" value="4">
       </div>
 
-      <button type="submit" class="btn-green btn-full" id="btn-generate"></button>
+      <div class="form-group" style="margin-top:1rem;">
+        <label style="font-size:0.9rem;font-weight:600;color:var(--text-dark);display:block;margin-bottom:0.5rem;">Province</label>
+        <select id="province-select" style="width:100%;padding:0.65rem 0.875rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:0.9rem;color:var(--text-dark);background:var(--bg-white);appearance:none;cursor:pointer;">
+          <option value="Lusaka">Lusaka</option>
+          <option value="Copperbelt">Copperbelt</option>
+          <option value="Central">Central</option>
+          <option value="Eastern">Eastern</option>
+          <option value="Northern">Northern</option>
+          <option value="Luapula">Luapula</option>
+          <option value="North-Western">North-Western</option>
+          <option value="Western">Western</option>
+          <option value="Southern">Southern</option>
+          <option value="Muchinga">Muchinga</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-top:1rem;">
+        <label style="font-size:0.9rem;font-weight:600;color:var(--text-dark);display:block;margin-bottom:0.5rem;">Plan Duration</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+          <button type="button" class="mb-size-btn active" id="dur-weekly" data-duration="7 days" style="padding:0.6rem;">
+            📅 Weekly (7 days)
+          </button>
+          <button type="button" class="mb-size-btn" id="dur-monthly" data-duration="30 days" style="padding:0.6rem;">
+            🗓 Monthly (30 days)
+          </button>
+        </div>
+        <input type="hidden" id="plan-duration" value="7 days">
+      </div>
+
+      <button type="submit" class="btn-green btn-full" id="btn-generate" style="margin-top:1.25rem;"></button>
     </form>
   </div>
 
@@ -108,6 +137,100 @@
   });
 
   initMealBudgetPage();
+
+  // Duration toggle buttons
+  document.getElementById("dur-weekly")?.addEventListener("click", () => {
+    document.getElementById("dur-weekly").classList.add("active");
+    document.getElementById("dur-monthly").classList.remove("active");
+    document.getElementById("plan-duration").value = "7 days";
+  });
+  document.getElementById("dur-monthly")?.addEventListener("click", () => {
+    document.getElementById("dur-monthly").classList.add("active");
+    document.getElementById("dur-weekly").classList.remove("active");
+    document.getElementById("plan-duration").value = "30 days";
+  });
+</script>
+
+<!-- Groq AI meal plan generation — capture-phase intercept before existing submit handler -->
+<script type="module">
+  import { requireAuth, loadUserProfile } from "./js/utils.js";
+  import { generateBudgetPlan } from "./js/groq.js";
+
+  let groqCondition = "general";
+
+  (async () => {
+    try {
+      const user = await requireAuth();
+      const profile = await loadUserProfile(user.uid);
+      if (profile?.condition) groqCondition = profile.condition;
+    } catch { /* silent */ }
+  })();
+
+  // Capture listener on main so it fires before #budget-form's own submit listener
+  document.querySelector(".mb-body").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    e.stopPropagation(); // Prevent existing generatePlan() from running
+
+    const budget = parseInt(document.getElementById("budget-range")?.value || "60", 10);
+    const familySize = parseInt(document.getElementById("family-size")?.value || "4", 10);
+    const province = document.getElementById("province-select")?.value || "Lusaka";
+    const duration = document.getElementById("plan-duration")?.value || "7 days";
+
+    const btn = document.getElementById("btn-generate");
+    const originalHTML = btn?.innerHTML;
+    if (btn) {
+      btn.innerHTML = "🤖 Groq AI is creating your affordable meal plan...";
+      btn.disabled = true;
+    }
+
+    const container = document.getElementById("plan-result");
+    if (container) {
+      container.innerHTML = `
+        <div style="background:var(--bg-white);border-radius:var(--radius);padding:1.5rem;text-align:center;border:1px solid var(--border);box-shadow:var(--shadow-card);">
+          <div style="font-size:1.5rem;margin-bottom:0.5rem;">🤖</div>
+          <p style="font-size:0.9rem;color:var(--text-medium);">Groq AI is building your personalised ${duration} meal plan for a family of ${familySize} in ${province} Province…</p>
+        </div>`;
+      container.classList.remove("hidden");
+      container.scrollIntoView({ behavior: "smooth" });
+    }
+
+    try {
+      const aiText = await generateBudgetPlan(budget, familySize, province, groqCondition, duration);
+
+      const formatted = aiText
+        .split(/\n{2,}/)
+        .map(para => `<p style="margin-bottom:0.75rem;line-height:1.7;font-size:0.875rem;">${para.replace(/\n/g,"<br>")}</p>`)
+        .join("");
+
+      if (container) {
+        container.innerHTML = `
+          <div class="mb-result-header" style="margin-bottom:0.875rem;">
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;">
+              <span style="font-size:1rem;">✨</span>
+              <strong style="font-size:1rem;">AI Meal Plan — ${duration} for ${familySize} people</strong>
+            </div>
+            <div style="font-size:0.8rem;opacity:0.85;">Budget: K${budget} &nbsp;·&nbsp; Province: ${province} &nbsp;·&nbsp; Condition: ${groqCondition}</div>
+          </div>
+          <div class="mb-meal-card" style="padding:1.25rem;">
+            ${formatted}
+          </div>
+          <div class="mb-tip-card" style="margin-top:0.75rem;">
+            <span>💡</span>
+            <div>Prices are based on 2026 Zambian market averages. Actual prices may vary by area, season, and market.</div>
+          </div>
+        `;
+      }
+    } catch (err) {
+      if (container) {
+        container.innerHTML = `
+          <div style="background:rgba(220,38,38,0.06);border:1.5px solid rgba(220,38,38,0.25);border-radius:var(--radius);padding:1.25rem;text-align:center;">
+            <p style="color:var(--accent-red);font-size:0.9rem;">Something went wrong. Please check your connection and try again.</p>
+          </div>`;
+      }
+    } finally {
+      if (btn) { btn.innerHTML = originalHTML; btn.disabled = false; }
+    }
+  }, true); // capture phase
 </script>
 </body>
 </html>

@@ -110,5 +110,96 @@
   document.getElementById("past-title").innerHTML = icon("calendar",16) + " Previous Checks";
   initSymptomNutritionPage();
 </script>
+
+<!-- Groq AI integration — intercepts #btn-check click before existing handler -->
+<script type="module">
+  import { requireAuth, loadUserProfile } from "./js/utils.js";
+  import { getConditionById } from "./js/conditions.js";
+  import { analyzeSymptoms } from "./js/groq.js";
+
+  let groqCondition = "general";
+
+  // Load user condition for Groq prompt
+  (async () => {
+    try {
+      const user = await requireAuth();
+      const profile = await loadUserProfile(user.uid);
+      if (profile?.condition) groqCondition = profile.condition;
+    } catch { /* silent */ }
+  })();
+
+  // Use capture phase on #symptom-container so our handler fires before
+  // the module's direct click listener on #btn-check
+  document.getElementById("symptom-container").addEventListener("click", async function(e) {
+    const btn = e.target.closest("#btn-check");
+    if (!btn || btn.disabled) return;
+
+    // Stop event propagating to #btn-check's own listener
+    e.stopPropagation();
+
+    // Collect selected symptoms from DOM
+    const symptoms = [...document.querySelectorAll(".sn-symptom-btn.selected")]
+      .map(b => b.dataset.id);
+    if (symptoms.length === 0) return;
+
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = "🤖 AI is analyzing...";
+    btn.disabled = true;
+
+    try {
+      const aiText = await analyzeSymptoms(symptoms, groqCondition);
+      const container = document.getElementById("results-container");
+      if (!container) return;
+
+      // Format AI response — convert line breaks to paragraphs
+      const formatted = aiText
+        .split(/\n{2,}/)
+        .map(para => `<p style="margin-bottom:0.75rem;line-height:1.7;">${para.replace(/\n/g,"<br>")}</p>`)
+        .join("");
+
+      container.innerHTML = `
+        <div class="sn-results-header">
+          <h2>✨ AI Nutritional Analysis</h2>
+          <p class="sn-results-sub">Groq AI analysed your ${symptoms.length} symptom${symptoms.length !== 1 ? "s" : ""} and identified nutritional deficiencies likely affecting you.</p>
+        </div>
+        <div class="sn-deficiency-card" style="border-top-color:#7C3AED;">
+          <div style="font-size:0.875rem;color:var(--text-dark);">${formatted}</div>
+        </div>
+        <div class="sn-tip-box">
+          <span>💡</span>
+          <span>These recommendations are based on common nutritional patterns in Zambia. Always consult a health worker for personalised medical advice.</span>
+        </div>
+        <div class="sn-action-row">
+          <a href="meal-planner.html" class="btn-green">Open Meal Planner</a>
+          <button class="btn-secondary" id="btn-reassess-ai">← Check Again</button>
+        </div>
+      `;
+      container.classList.remove("hidden");
+      container.scrollIntoView({ behavior: "smooth" });
+
+      document.getElementById("btn-reassess-ai")?.addEventListener("click", () => {
+        // Deselect all symptom buttons via programmatic click (fires existing module handler)
+        document.querySelectorAll(".sn-symptom-btn.selected").forEach(b => b.click());
+        container.classList.add("hidden");
+        container.innerHTML = "";
+        document.getElementById("symptom-container")?.scrollIntoView({ behavior: "smooth" });
+      });
+
+    } catch (err) {
+      const container = document.getElementById("results-container");
+      if (container) {
+        container.innerHTML = `
+          <div class="sn-intro-card">
+            <p style="color:var(--accent-red);font-size:0.9rem;">Something went wrong. Please try again.</p>
+          </div>
+        `;
+        container.classList.remove("hidden");
+      }
+    } finally {
+      btn.innerHTML = originalHTML;
+      btn.disabled = false;
+    }
+  }, true); // true = capture phase
+</script>
 </body>
 </html>
