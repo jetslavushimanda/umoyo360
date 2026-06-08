@@ -132,8 +132,8 @@
 
     <!-- Groq AI recipe button -->
     <div style="margin:0.75rem 0 0.875rem;">
-      <button class="btn-primary btn-full" id="btn-ai-recipes" style="gap:0.5rem;background:linear-gradient(135deg,#4A6CF7,#7C3AED);border-color:transparent;">
-        ✨ Generate AI Recipes with Groq
+      <button class="btn-primary btn-full" id="btn-ai-recipes" style="gap:0.5rem;">
+        Find Zambian Recipes
       </button>
     </div>
 
@@ -160,59 +160,467 @@
   initCookWithPage();
 </script>
 
-<!-- Groq AI recipe generation + jsPDF download -->
+<!-- Hardcoded Zambian recipe database + jsPDF download -->
 <script type="module">
   import { requireAuth, loadUserProfile } from "./js/utils.js";
-  import { generateRecipes } from "./js/groq.js";
 
-  function parseMarkdown(text) {
-    if (!text) return "";
-    let html = text
-      .replace(/^### (.+)$/gm, '<h3 class="ai-heading-3">$1</h3>')
-      .replace(/^## (.+)$/gm,  '<h2 class="ai-heading-2">$1</h2>')
-      .replace(/^# (.+)$/gm,   '<h1 class="ai-heading-1">$1</h1>')
-      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-      .replace(/\*(.+?)\*/g,     "<em>$1</em>")
-      .replace(/^[\*\-] (.+)$/gm,  '<li class="ai-list-item">$1</li>')
-      .replace(/^\d+\. (.+)$/gm,   '<li class="ai-numbered-item">$1</li>')
-      .replace(/^---+$/gm,         '<hr class="ai-divider">')
-      .replace(/\n\n/g, '</p><p class="ai-paragraph">')
-      .replace(/\n/g,   "<br>");
-    html = html.replace(
-      /(<li class="ai-list-item">[\s\S]*?<\/li>(\s*<li class="ai-list-item">[\s\S]*?<\/li>)*)/g,
-      '<ul class="ai-list">$1</ul>'
-    );
-    html = html.replace(
-      /(<li class="ai-numbered-item">[\s\S]*?<\/li>(\s*<li class="ai-numbered-item">[\s\S]*?<\/li>)*)/g,
-      '<ol class="ai-numbered-list">$1</ol>'
-    );
-    return '<p class="ai-paragraph">' + html + "</p>";
-  }
+  const ZAMBIAN_RECIPES = [
+    {
+      id:1, name:"Nshima with Kapenta and Rape",
+      ingredients:["Nshima","Kapenta","Rape","Tomatoes","Onions","Cooking Oil","Salt"],
+      prepTime:"25 minutes", servings:4,
+      goodFor:["general","anaemia","hypertension"], notFor:["gout"],
+      nutrition:["High Iron","High Calcium","Vitamin A"],
+      whyGood:{
+        general:"Complete Zambian meal with protein iron and vegetables.",
+        anaemia:"Kapenta is one of the richest iron sources in Zambia.",
+        hypertension:"Use no salt. Kapenta provides potassium for blood pressure."
+      },
+      steps:[
+        "Boil 4 cups of water in a large pot",
+        "Add maize meal gradually while stirring to avoid lumps",
+        "Stir continuously for 10 minutes until thick and smooth",
+        "Cover and cook on low heat for 5 more minutes",
+        "In a separate pan heat 2 tablespoons of cooking oil",
+        "Fry onions until golden brown about 3 minutes",
+        "Add tomatoes and cook until soft about 4 minutes",
+        "Add kapenta and stir gently for 3 minutes",
+        "Season with very little salt",
+        "Quickly stir fry rape with garlic for 2 minutes",
+        "Serve nshima with kapenta relish and rape on the side"
+      ]
+    },
+    {
+      id:2, name:"Oats Porridge with Banana and Groundnuts",
+      ingredients:["Rolled Oats","Banana","Groundnuts","Milk","Water"],
+      prepTime:"10 minutes", servings:2,
+      goodFor:["general","diabetes_type2","gastritis","hypertension","cholesterol","obesity"],
+      notFor:[],
+      nutrition:["High Fiber","Protein","Potassium"],
+      whyGood:{
+        general:"High fiber nutritious breakfast for sustained energy.",
+        diabetes_type2:"Oats are low glycemic and keep blood sugar stable for hours.",
+        gastritis:"Oats coat and soothe the stomach lining. Eat this every morning.",
+        hypertension:"Oats and banana both help lower blood pressure naturally."
+      },
+      steps:[
+        "Boil 2 cups of water in a small pot",
+        "Add 1 cup of rolled oats and stir well",
+        "Cook on medium heat for 5 minutes stirring regularly",
+        "Add half a cup of milk and stir",
+        "Cook for 2 more minutes until creamy",
+        "Pour into bowls",
+        "Slice banana on top",
+        "Sprinkle roasted groundnuts on top",
+        "Serve hot immediately"
+      ]
+    },
+    {
+      id:3, name:"Beans and Rape Stew with Sweet Potato",
+      ingredients:["Beans","Rape","Sweet Potato","Tomatoes","Onions","Cooking Oil","Salt"],
+      prepTime:"45 minutes", servings:4,
+      goodFor:["general","diabetes_type2","hypertension","cholesterol","obesity","anaemia"],
+      notFor:["kidney_disease"],
+      nutrition:["High Protein","High Fiber","Iron","Vitamin A"],
+      whyGood:{
+        general:"High protein high fiber meal using affordable Zambian staples.",
+        diabetes_type2:"Sweet potato is lower glycemic than nshima. Beans stabilize blood sugar.",
+        obesity:"This meal is filling high fiber and very low in unhealthy fats.",
+        hypertension:"Beans and sweet potato are both high in potassium."
+      },
+      steps:[
+        "Soak beans overnight or for at least 2 hours",
+        "Boil beans in fresh water for 30 minutes until soft",
+        "While beans cook boil sweet potato separately until tender",
+        "In a pan heat oil and fry onions until golden",
+        "Add tomatoes and cook until they form a sauce",
+        "Add cooked beans to the tomato sauce and stir",
+        "Season with very little salt and simmer for 5 minutes",
+        "In a separate pan quickly stir fry rape for 2 minutes",
+        "Serve beans with boiled sweet potato and rape on side"
+      ]
+    },
+    {
+      id:4, name:"Ifisashi with Nshima",
+      ingredients:["Groundnut Powder","Rape","Tomatoes","Onions","Salt","Nshima"],
+      prepTime:"20 minutes", servings:4,
+      goodFor:["general","anaemia","malnutrition"], notFor:["kidney_disease","gout"],
+      nutrition:["High Protein","Healthy Fats","Iron","Vitamin A"],
+      whyGood:{
+        general:"Traditional Zambian dish rich in protein and healthy fats.",
+        anaemia:"Groundnuts provide iron and rape adds more. Very good for blood.",
+        malnutrition:"Ifisashi is calorie dense and nutrient rich for rebuilding health."
+      },
+      steps:[
+        "Make nshima as usual and set aside covered",
+        "In a pot heat a little water over medium heat",
+        "Add chopped onions and tomatoes",
+        "Cook until soft about 5 minutes",
+        "Add washed and chopped rape leaves and stir for 3 minutes",
+        "Add groundnut powder gradually while stirring",
+        "Add a little water if too thick",
+        "Stir continuously to prevent burning",
+        "Season with very little salt",
+        "Cook for 5 more minutes until creamy",
+        "Serve hot with nshima"
+      ]
+    },
+    {
+      id:5, name:"Boiled Eggs with Moringa and Tomato Salad",
+      ingredients:["Eggs","Moringa Leaves","Tomatoes","Onions","Lemon","Salt"],
+      prepTime:"15 minutes", servings:2,
+      goodFor:["general","diabetes_type2","hypertension","anaemia","obesity"], notFor:[],
+      nutrition:["High Protein","Vitamin A","Iron","Vitamin C"],
+      whyGood:{
+        general:"Low carb high nutrient meal packed with vitamins and protein.",
+        diabetes_type2:"No carbohydrates in this meal. Perfect for controlling blood sugar.",
+        hypertension:"Moringa is one of the most powerful foods for blood pressure.",
+        anaemia:"Moringa has exceptionally high iron. Lemon boosts absorption."
+      },
+      steps:[
+        "Place eggs in cold water in a pot",
+        "Bring to boil and cook for 10 minutes",
+        "Remove eggs and place in cold water to cool",
+        "Wash moringa leaves well",
+        "Chop tomatoes and onions finely",
+        "Mix tomatoes onions and moringa in a bowl",
+        "Squeeze lemon juice over the salad",
+        "Add very little salt and mix well",
+        "Peel eggs and cut in half",
+        "Arrange eggs on plate with salad alongside",
+        "Serve immediately"
+      ]
+    },
+    {
+      id:6, name:"Scrambled Eggs with Moringa and Sweet Potato",
+      ingredients:["Eggs","Moringa Leaves","Sweet Potato","Onions","Cooking Oil","Salt"],
+      prepTime:"20 minutes", servings:2,
+      goodFor:["general","diabetes_type2","anaemia","malnutrition"], notFor:[],
+      nutrition:["Complete Protein","Vitamin A","Iron"],
+      whyGood:{
+        general:"Simple nutritious meal combining the best of eggs and moringa.",
+        diabetes_type2:"Sweet potato has lower glycemic index than nshima or bread.",
+        anaemia:"Moringa and eggs together provide iron and B12 for blood building.",
+        malnutrition:"Eggs provide complete protein with all essential amino acids."
+      },
+      steps:[
+        "Boil or roast sweet potato until tender",
+        "Wash moringa leaves well",
+        "In a pan heat a little oil",
+        "Fry onions for 2 minutes",
+        "Add moringa leaves and stir for 1 minute",
+        "Beat eggs in a bowl with very little salt",
+        "Pour eggs over moringa and onions",
+        "Stir gently as eggs cook",
+        "Cook until eggs are just set but still soft",
+        "Serve with boiled or roasted sweet potato"
+      ]
+    },
+    {
+      id:7, name:"Chicken and Pumpkin Leaves Soup",
+      ingredients:["Chicken","Pumpkin Leaves","Tomatoes","Onions","Garlic","Salt","Water"],
+      prepTime:"40 minutes", servings:4,
+      goodFor:["general","gastritis","malnutrition"], notFor:[],
+      nutrition:["High Protein","Vitamin A","Iron","Healing"],
+      whyGood:{
+        general:"Nourishing soup rich in protein and vitamins.",
+        gastritis:"This gentle soup is easy on the stomach. The broth soothes inflammation.",
+        malnutrition:"This nutrient dense soup rebuilds strength and immunity."
+      },
+      steps:[
+        "Cut chicken into pieces and wash well",
+        "Boil chicken in 4 cups water for 20 minutes",
+        "Add chopped onions tomatoes and garlic to the pot",
+        "Season with very little salt",
+        "Cook for 10 more minutes until chicken is tender",
+        "Wash pumpkin leaves well and chop roughly",
+        "Add pumpkin leaves to the soup",
+        "Cook for 5 more minutes",
+        "Check seasoning and adjust if needed",
+        "Serve hot as a soup or with nshima"
+      ]
+    },
+    {
+      id:8, name:"Kapenta and Vegetable Rice",
+      ingredients:["Rice","Kapenta","Carrots","Green Pepper","Onions","Tomatoes","Cooking Oil","Salt"],
+      prepTime:"30 minutes", servings:4,
+      goodFor:["general","anaemia","hypertension"], notFor:["gout"],
+      nutrition:["Iron","Calcium","Vitamin A","Carbohydrates"],
+      whyGood:{
+        general:"One pot meal providing carbohydrates protein and vegetables.",
+        anaemia:"Kapenta is one of the richest sources of iron and calcium in Zambia.",
+        hypertension:"Use no salt. Kapenta provides natural minerals for blood pressure."
+      },
+      steps:[
+        "Wash and soak rice for 10 minutes then drain",
+        "Cook rice in 2 cups water until soft",
+        "In a pan heat oil and fry onions 3 minutes",
+        "Add carrots and green pepper cook 4 minutes",
+        "Add tomatoes and cook until soft",
+        "Add kapenta and stir gently",
+        "Season with very little salt",
+        "Cook for 3 more minutes",
+        "Mix the kapenta vegetable sauce with cooked rice",
+        "Stir well and serve hot"
+      ]
+    },
+    {
+      id:9, name:"Banana and Peanut Butter Porridge",
+      ingredients:["Rolled Oats","Banana","Peanut Butter","Milk","Water"],
+      prepTime:"10 minutes", servings:2,
+      goodFor:["general","gastritis","malnutrition","anaemia"],
+      notFor:["obesity","kidney_disease"],
+      nutrition:["High Calorie","Protein","Potassium","Fiber"],
+      whyGood:{
+        general:"High energy creamy breakfast loved by all ages.",
+        gastritis:"This gentle creamy porridge soothes and heals the stomach lining.",
+        malnutrition:"High calorie and nutrient dense. Perfect for rebuilding body weight."
+      },
+      steps:[
+        "Boil 2 cups water in a small pot",
+        "Add 1 cup oats and stir",
+        "Cook for 3 minutes stirring continuously",
+        "Add half cup milk and stir",
+        "Cook 2 more minutes until creamy",
+        "Remove from heat",
+        "Add 2 tablespoons peanut butter and stir well",
+        "Pour into bowls",
+        "Slice banana on top",
+        "Serve immediately while hot"
+      ]
+    },
+    {
+      id:10, name:"Bream Fish with Cabbage and Nshima",
+      ingredients:["Bream Fish","Cabbage","Tomatoes","Onions","Cooking Oil","Salt","Nshima"],
+      prepTime:"30 minutes", servings:4,
+      goodFor:["general","hypertension","heart_disease","cholesterol"], notFor:["gout"],
+      nutrition:["Omega 3","Protein","Vitamin C","Low Fat"],
+      whyGood:{
+        general:"Classic Zambian fish meal with excellent nutrition.",
+        hypertension:"Fish omega 3 naturally lowers blood pressure.",
+        heart_disease:"Bream is one of the best heart healthy proteins in Zambia.",
+        cholesterol:"Fish omega 3 raises good cholesterol and lowers bad cholesterol."
+      },
+      steps:[
+        "Clean and wash fish thoroughly",
+        "Season fish with very little salt",
+        "Grill or fry fish in minimal oil until cooked through",
+        "Make nshima as usual",
+        "In a pan heat a little oil",
+        "Fry onions for 2 minutes",
+        "Add tomatoes and cook until soft",
+        "Add shredded cabbage and stir fry for 3 minutes",
+        "Season with very little salt",
+        "Serve fish with nshima and cabbage relish"
+      ]
+    },
+    {
+      id:11, name:"Groundnut Soup with Cassava Leaves",
+      ingredients:["Groundnut Powder","Cassava Leaves","Tomatoes","Onions","Salt","Water"],
+      prepTime:"30 minutes", servings:4,
+      goodFor:["general","malnutrition","anaemia"],
+      notFor:["kidney_disease","gout","thyroid"],
+      nutrition:["High Protein","Healthy Fats","Iron","Calcium"],
+      whyGood:{
+        general:"Rich nutritious traditional Zambian soup.",
+        malnutrition:"Calorie dense and protein rich. Excellent for rebuilding health.",
+        anaemia:"Cassava leaves and groundnuts both contain iron for blood building."
+      },
+      steps:[
+        "Wash cassava leaves very well and chop finely",
+        "Boil cassava leaves for 15 minutes until soft",
+        "Drain and set aside",
+        "In a pot fry onions and tomatoes in a little oil",
+        "Cook until tomatoes are soft about 5 minutes",
+        "Add groundnut powder gradually",
+        "Add 2 cups of water and stir well",
+        "Bring to gentle boil stirring continuously",
+        "Add cooked cassava leaves and stir",
+        "Cook for 10 more minutes",
+        "Season with very little salt",
+        "Serve with nshima or cassava"
+      ]
+    },
+    {
+      id:12, name:"Cassava with Beans and Bondwe",
+      ingredients:["Cassava","Beans","Bondwe","Tomatoes","Onions","Cooking Oil","Salt"],
+      prepTime:"50 minutes", servings:4,
+      goodFor:["general","anaemia","malnutrition"], notFor:["thyroid"],
+      nutrition:["High Iron","High Fiber","Protein","Gluten Free"],
+      whyGood:{
+        general:"Nutritious gluten free traditional Zambian meal.",
+        anaemia:"Bondwe and beans are both high in iron. Excellent combination.",
+        malnutrition:"Cassava provides calories and beans provide protein for recovery."
+      },
+      steps:[
+        "Soak beans overnight then boil until soft 30 minutes",
+        "Peel and boil cassava separately until tender",
+        "In a pan heat oil and fry onions until golden",
+        "Add tomatoes and cook into a sauce",
+        "Add cooked beans to sauce and stir",
+        "Season with very little salt and simmer 5 minutes",
+        "In another pan quickly stir fry bondwe for 2 minutes",
+        "Drain cassava and cut into serving pieces",
+        "Serve cassava with beans relish and bondwe"
+      ]
+    }
+  ];
 
-  let groqProfile = { condition: "general", familySize: 4, fullName: "User" };
-  let lastAiText = "";
-  let lastIngredients = [];
+  const ING_MAP = {
+    maize_flour:   ["Nshima"],
+    rice:          ["Rice"],
+    sweet_potato:  ["Sweet Potato"],
+    cassava:       ["Cassava","Cassava Leaves"],
+    kapenta:       ["Kapenta","Kapenta Dried"],
+    chicken:       ["Chicken"],
+    eggs:          ["Eggs"],
+    beans:         ["Beans"],
+    tilapia:       ["Bream Fish"],
+    groundnuts:    ["Groundnuts","Groundnut Powder"],
+    soya:          ["Soya Pieces"],
+    beef:          ["Beef Liver"],
+    rape:          ["Rape","Bondwe"],
+    tomatoes:      ["Tomatoes"],
+    onion:         ["Onions"],
+    carrots:       ["Carrots"],
+    pumpkin:       ["Pumpkin Leaves"],
+    moringa:       ["Moringa Leaves","Moringa"],
+    cabbage:       ["Cabbage"],
+    garlic:        ["Garlic"],
+    banana:        ["Banana"],
+    pawpaw:        ["Pawpaw"],
+    orange:        ["Orange","Lemon"],
+    guava:         ["Guava"],
+    milk:          ["Milk"],
+    yoghurt:       ["Plain Yoghurt"],
+    peanut_butter: ["Peanut Butter"],
+    cooking_oil:   ["Cooking Oil"],
+    salt:          ["Salt"],
+  };
+
+  let userProfile = { condition:"general", fullName:"User" };
+  let lastMatchedRecipes = [];
+  let lastSelectedIngNames = [];
 
   (async () => {
     try {
       const user = await requireAuth();
       const profile = await loadUserProfile(user.uid);
       if (profile) {
-        groqProfile.condition = profile.condition || "general";
-        groqProfile.familySize = profile.familySize || 4;
-        groqProfile.fullName = profile.fullName || "User";
+        userProfile.condition = profile.condition || "general";
+        userProfile.fullName  = profile.fullName  || "User";
       }
     } catch { /* silent */ }
   })();
 
-  document.getElementById("btn-ai-recipes")?.addEventListener("click", async () => {
-    // Collect selected ingredients from DOM
-    const selected = [
+  function ingIdMatchesName(id, ingName) {
+    const names = ING_MAP[id] || [];
+    const lower = ingName.toLowerCase();
+    return names.some(n => lower.includes(n.toLowerCase()) || n.toLowerCase().includes(lower));
+  }
+
+  function findRecipes(selectedIds, condition) {
+    const raw  = (condition || "general").toLowerCase().replace(/\s+/g,"_");
+    const alias = { anemia:"anaemia" };
+    const cond  = alias[raw] || raw;
+    return ZAMBIAN_RECIPES
+      .filter(r => !r.notFor.includes(cond))
+      .map(r => {
+        const matched = [], missing = [];
+        for (const ing of r.ingredients) {
+          if (selectedIds.some(id => ingIdMatchesName(id, ing))) matched.push(ing);
+          else missing.push(ing);
+        }
+        return { ...r, matchedIngredients:matched, missingIngredients:missing,
+                 matchScore: matched.length / r.ingredients.length };
+      })
+      .filter(r => r.matchScore > 0)
+      .sort((a, b) => b.matchScore - a.matchScore)
+      .slice(0, 3);
+  }
+
+  function displayRecipes(recipes, condition) {
+    const raw  = (condition || "general").toLowerCase().replace(/\s+/g,"_");
+    const alias = { anemia:"anaemia" };
+    const cond  = alias[raw] || raw;
+    const container = document.getElementById("recipe-results");
+    const pdfArea   = document.getElementById("pdf-download-area");
+    if (!container) return;
+
+    if (recipes.length === 0) {
+      container.innerHTML = `
+        <div class="cw-empty">
+          <div class="cw-empty-icon">🍳</div>
+          <p>No recipes matched your ingredients.</p>
+          <p class="cw-empty-sub">Try selecting more ingredients — staples like maize flour, rice, or beans unlock the most recipes.</p>
+        </div>`;
+      if (pdfArea) pdfArea.style.display = "none";
+      return;
+    }
+
+    const colors = ["#0F4DA6","#0D9954","#7C3AED"];
+
+    container.innerHTML = recipes.map((recipe, i) => {
+      const color   = colors[i % colors.length];
+      const whyText = recipe.whyGood[cond] || recipe.whyGood.general || "";
+      return `
+        <div class="cw-recipe-card" id="zr-${i}">
+          <div class="cw-recipe-header" onclick="window._toggleZR(${i})">
+            <div class="cw-recipe-meta">
+              <span class="cw-recipe-difficulty" style="color:${color};">Recipe ${i + 1}</span>
+              <span class="cw-recipe-time">⏱ ${recipe.prepTime}</span>
+              <span class="cw-recipe-servings">🍽 ${recipe.servings} servings</span>
+            </div>
+            <h3 class="cw-recipe-name">${recipe.name}</h3>
+            ${whyText ? `<p class="cw-recipe-desc">${whyText}</p>` : ""}
+            <div class="cw-nutrition-pills">
+              ${recipe.nutrition.map(n => `
+                <span class="cw-nut-pill" style="background:${color}18;color:${color};border:1px solid ${color}30;">${n}</span>
+              `).join("")}
+            </div>
+            <span class="cw-expand-hint" id="zhint-${i}">Tap to see recipe ▼</span>
+          </div>
+          <div class="cw-recipe-body hidden" id="zbody-${i}">
+            <div class="cw-ingredients-section">
+              <div class="cw-ing-col">
+                <h4>You Have</h4>
+                <ul>${recipe.matchedIngredients.map(n => `<li class="have-it">✓ ${n}</li>`).join("")}</ul>
+              </div>
+              ${recipe.missingIngredients.length > 0 ? `
+                <div class="cw-ing-col">
+                  <h4>Still Needed</h4>
+                  <ul>${recipe.missingIngredients.map(n => `<li class="dont-have">${n}</li>`).join("")}</ul>
+                </div>` : ""}
+            </div>
+            <div class="cw-steps">
+              <h4>Steps</h4>
+              <ol>${recipe.steps.map(s => `<li>${s}</li>`).join("")}</ol>
+            </div>
+            <div class="cw-tip-box">
+              <span>💡</span><span>${recipe.whyGood.general}</span>
+            </div>
+          </div>
+        </div>`;
+    }).join("");
+
+    window._toggleZR = (i) => {
+      const body = document.getElementById(`zbody-${i}`);
+      const hint = document.getElementById(`zhint-${i}`);
+      if (!body) return;
+      body.classList.toggle("hidden");
+      if (hint) hint.textContent = body.classList.contains("hidden") ? "Tap to see recipe ▼" : "Tap to hide ▲";
+    };
+
+    if (pdfArea) pdfArea.style.display = "block";
+  }
+
+  document.getElementById("btn-ai-recipes")?.addEventListener("click", () => {
+    const selectedIds = [
       ...document.querySelectorAll(".cw-ingredient-cb:checked"),
       ...document.querySelectorAll(".cw-condiment-cb:checked"),
     ].map(cb => cb.value);
 
-    if (selected.length === 0) {
+    if (selectedIds.length === 0) {
       const counter = document.getElementById("recipe-counter");
       if (counter) {
         counter.textContent = "Please select at least one ingredient first.";
@@ -222,200 +630,125 @@
       return;
     }
 
-    lastIngredients = selected;
-
-    const btn = document.getElementById("btn-ai-recipes");
-    btn.innerHTML = "🤖 Groq AI is creating your recipes...";
-    btn.disabled = true;
-
-    const results = document.getElementById("recipe-results");
-    if (results) {
-      results.innerHTML = `
-        <div class="cw-empty" style="padding:2rem;">
-          <div class="cw-empty-icon">🤖</div>
-          <p>Groq AI is generating 3 personalised recipes for your ingredients…</p>
-          <p class="cw-empty-sub">This may take a few seconds.</p>
-        </div>`;
-    }
-
-    document.getElementById("pdf-download-area").style.display = "none";
-
-    try {
-      const aiText = await generateRecipes(selected, groqProfile.condition, groqProfile.familySize);
-      lastAiText = aiText;
-
-      // Split into 3 recipe blocks by heading patterns
-      const recipeBlocks = splitRecipes(aiText);
-
-      if (results) {
-        results.innerHTML = recipeBlocks.map((block, i) => `
-          <div class="cw-recipe-card" style="margin-bottom:0.875rem;">
-            <div class="cw-recipe-header" style="cursor:default;">
-              <div class="cw-recipe-meta">
-                <span class="cw-recipe-difficulty" style="color:#7C3AED;">✨ AI Recipe ${i + 1}</span>
-              </div>
-              <div class="ai-response-wrapper">${parseMarkdown(block.trim())}</div>
-            </div>
-          </div>
-        `).join("");
-
-        document.getElementById("pdf-download-area").style.display = "block";
-      }
-
-    } catch (err) {
-      if (results) {
-        results.innerHTML = `
-          <div class="cw-empty">
-            <div class="cw-empty-icon">⚠️</div>
-            <p style="color:var(--accent-red);">Something went wrong. Please check your connection and try again.</p>
-          </div>`;
-      }
-    } finally {
-      btn.innerHTML = "✨ Generate AI Recipes with Groq";
-      btn.disabled = false;
-    }
-  });
-
-  // PDF download
-  document.getElementById("btn-download-pdf")?.addEventListener("click", () => {
-    if (!lastAiText) return;
-    generatePDF(lastAiText, lastIngredients, groqProfile);
-  });
-
-  function splitRecipes(text) {
-    // Try to split on "Recipe 1", "Recipe 2", numbered headings, or "## " headings
-    const parts = text.split(/(?=(?:Recipe\s*[123]|##\s*Recipe|\n#{1,3}\s))/i).filter(s => s.trim().length > 30);
-    if (parts.length >= 2) return parts.slice(0, 3);
-    // Fallback: split into 3 roughly equal parts
-    const lines = text.split("\n");
-    const third = Math.ceil(lines.length / 3);
-    return [
-      lines.slice(0, third).join("\n"),
-      lines.slice(third, third * 2).join("\n"),
-      lines.slice(third * 2).join("\n"),
-    ];
-  }
-
-  function generatePDF(aiText, ingredients, profile) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit: "mm", format: "a4" });
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
-    const margin = 18;
-    const contentW = pageW - margin * 2;
-    const today = new Date().toLocaleDateString("en-ZM", { year:"numeric", month:"long", day:"numeric" });
-
-    // ── Cover page ──────────────────────────────────────────
-    doc.setFillColor(15, 46, 82);
-    doc.rect(0, 0, pageW, pageH, "F");
-
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(32);
-    doc.setFont("helvetica", "bold");
-    doc.text("UMOYO360", pageW / 2, 55, { align: "center" });
-
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "normal");
-    doc.text("Your Zambian Kitchen Guide", pageW / 2, 67, { align: "center" });
-
-    doc.setDrawColor(255, 255, 255);
-    doc.setLineWidth(0.4);
-    doc.line(margin + 20, 74, pageW - margin - 20, 74);
-
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text(`Generated for: ${profile.fullName}`, pageW / 2, 85, { align: "center" });
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text(`Condition: ${profile.condition}`, pageW / 2, 93, { align: "center" });
-    doc.text(`Date: ${today}`, pageW / 2, 101, { align: "center" });
-
-    doc.setFontSize(9);
-    doc.setTextColor(180, 200, 240);
-    doc.text(`Ingredients used: ${ingredients.slice(0, 8).join(", ")}${ingredients.length > 8 ? " +" + (ingredients.length - 8) + " more" : ""}`, pageW / 2, 115, { align: "center", maxWidth: contentW });
-
-    // ── Recipe pages ────────────────────────────────────────
-    const recipeBlocks = splitRecipes(aiText);
-    const recipeColors = [[74, 108, 247], [124, 58, 237], [8, 145, 178]];
-
-    recipeBlocks.forEach((block, idx) => {
-      doc.addPage();
-      const [r, g, b] = recipeColors[idx] || [15, 77, 166];
-
-      // Header bar
-      doc.setFillColor(r, g, b);
-      doc.rect(0, 0, pageW, 22, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(13);
-      doc.setFont("helvetica", "bold");
-      doc.text(`Recipe ${idx + 1} of ${recipeBlocks.length}`, margin, 14);
-
-      // Content
-      doc.setTextColor(20, 30, 55);
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      const lines = doc.splitTextToSize(block.trim(), contentW);
-      let y = 32;
-      lines.forEach(line => {
-        if (y > pageH - 20) {
-          doc.addPage();
-          doc.setFillColor(r, g, b);
-          doc.rect(0, 0, pageW, 8, "F");
-          y = 16;
-          doc.setTextColor(20, 30, 55);
-          doc.setFontSize(10);
-          doc.setFont("helvetica", "normal");
-        }
-        const isHeading = /^(#{1,3}|\d+\.|Recipe\s*\d)/i.test(line.trim());
-        if (isHeading) {
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(r, g, b);
-        } else {
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(20, 30, 55);
-        }
-        doc.text(line, margin, y);
-        y += isHeading ? 6 : 5;
-      });
+    lastSelectedIngNames = selectedIds.map(id => {
+      const el = document.querySelector(`.cw-ingredient-cb[value="${id}"], .cw-condiment-cb[value="${id}"]`);
+      return el?.closest("label")?.querySelector(".cw-ing-name")?.textContent?.trim() || id;
     });
 
-    // ── Disclaimer page ─────────────────────────────────────
+    lastMatchedRecipes = findRecipes(selectedIds, userProfile.condition);
+    displayRecipes(lastMatchedRecipes, userProfile.condition);
+  });
+
+  document.getElementById("btn-download-pdf")?.addEventListener("click", () => {
+    if (!lastMatchedRecipes.length) return;
+    generatePDF(lastMatchedRecipes, lastSelectedIngNames, userProfile);
+  });
+
+  function generatePDF(recipes, ingredients, profile) {
+    if (!window.jspdf) return;
+    const { jsPDF } = window.jspdf;
+    const doc      = new jsPDF({ unit:"mm", format:"a4" });
+    const pageW    = doc.internal.pageSize.getWidth();
+    const pageH    = doc.internal.pageSize.getHeight();
+    const margin   = 18;
+    const contentW = pageW - margin * 2;
+    const today    = new Date().toLocaleDateString("en-ZM",{year:"numeric",month:"long",day:"numeric"});
+    const raw      = (profile.condition || "general").toLowerCase().replace(/\s+/g,"_");
+    const cond     = ({ anemia:"anaemia" })[raw] || raw;
+
+    // Cover page
+    doc.setFillColor(15,46,82);
+    doc.rect(0,0,pageW,pageH,"F");
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(32); doc.setFont("helvetica","bold");
+    doc.text("UMOYO360", pageW/2, 55, {align:"center"});
+    doc.setFontSize(14); doc.setFont("helvetica","normal");
+    doc.text("Your Zambian Kitchen Guide", pageW/2, 67, {align:"center"});
+    doc.setDrawColor(255,255,255); doc.setLineWidth(0.4);
+    doc.line(margin+20, 74, pageW-margin-20, 74);
+    doc.setFontSize(11); doc.setFont("helvetica","bold");
+    doc.text(`Generated for: ${profile.fullName}`, pageW/2, 85, {align:"center"});
+    doc.setFontSize(10); doc.setFont("helvetica","normal");
+    doc.text(`Condition: ${profile.condition}`, pageW/2, 93, {align:"center"});
+    doc.text(`Date: ${today}`, pageW/2, 101, {align:"center"});
+    doc.setFontSize(9); doc.setTextColor(180,200,240);
+    const ingStr = ingredients.slice(0,6).join(", ") + (ingredients.length > 6 ? ` +${ingredients.length-6} more` : "");
+    doc.text(`Ingredients: ${ingStr}`, pageW/2, 115, {align:"center",maxWidth:contentW});
+
+    // One page per recipe
+    const recipeColors = [[15,77,166],[13,153,84],[124,58,237]];
+    recipes.forEach((recipe, idx) => {
+      doc.addPage();
+      const [r,g,b] = recipeColors[idx] || [15,77,166];
+      doc.setFillColor(r,g,b);
+      doc.rect(0,0,pageW,22,"F");
+      doc.setTextColor(255,255,255);
+      doc.setFontSize(12); doc.setFont("helvetica","bold");
+      doc.text(recipe.name, margin, 14, {maxWidth:contentW-10});
+
+      let y = 30;
+      const whyText = recipe.whyGood[cond] || recipe.whyGood.general || "";
+      if (whyText) {
+        doc.setFillColor(240,245,255);
+        const wLines = doc.splitTextToSize(whyText, contentW-6);
+        doc.rect(margin, y-4, contentW, wLines.length*5+6, "F");
+        doc.setTextColor(r,g,b); doc.setFontSize(9); doc.setFont("helvetica","italic");
+        doc.text(wLines, margin+3, y+1);
+        y += wLines.length*5 + 10;
+      }
+
+      doc.setTextColor(100,120,150); doc.setFontSize(8.5); doc.setFont("helvetica","normal");
+      doc.text(`Prep time: ${recipe.prepTime}  |  Serves: ${recipe.servings}`, margin, y);
+      y += 9;
+
+      doc.setTextColor(r,g,b); doc.setFontSize(9); doc.setFont("helvetica","bold");
+      doc.text("INGREDIENTS", margin, y); y += 6;
+      recipe.ingredients.forEach((ing,j) => {
+        if (y > pageH-20) { doc.addPage(); y=20; }
+        doc.setTextColor(20,30,55); doc.setFont("helvetica","normal");
+        doc.text(`${j+1}. ${ing}`, margin+3, y); y += 5.5;
+      });
+      y += 5;
+
+      if (y > pageH-40) { doc.addPage(); y=20; }
+      doc.setTextColor(r,g,b); doc.setFontSize(9); doc.setFont("helvetica","bold");
+      doc.text("INSTRUCTIONS", margin, y); y += 6;
+      recipe.steps.forEach((step,j) => {
+        if (y > pageH-18) { doc.addPage(); y=20; }
+        doc.setTextColor(20,30,55); doc.setFont("helvetica","normal");
+        const lines = doc.splitTextToSize(`${j+1}. ${step}`, contentW-6);
+        doc.text(lines, margin+3, y); y += lines.length*5+2;
+      });
+      y += 5;
+
+      if (y > pageH-18) { doc.addPage(); y=20; }
+      doc.setTextColor(r,g,b); doc.setFont("helvetica","bold"); doc.setFontSize(8.5);
+      doc.text("NUTRITION: " + recipe.nutrition.join("  •  "), margin, y);
+    });
+
+    // Disclaimer page
     doc.addPage();
-    doc.setFillColor(248, 250, 253);
-    doc.rect(0, 0, pageW, pageH, "F");
-
-    doc.setTextColor(15, 77, 166);
-    doc.setFontSize(13);
-    doc.setFont("helvetica", "bold");
+    doc.setFillColor(248,250,253); doc.rect(0,0,pageW,pageH,"F");
+    doc.setTextColor(15,77,166); doc.setFontSize(13); doc.setFont("helvetica","bold");
     doc.text("Health Disclaimer", margin, 28);
-
-    doc.setFontSize(9.5);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(67, 83, 115);
-    const disclaimer = [
-      "These recipes were generated by Groq AI based on the ingredients you selected and your",
-      "stated health condition. They are intended as general nutritional guidance only.",
+    doc.setFontSize(9.5); doc.setFont("helvetica","normal"); doc.setTextColor(67,83,115);
+    [
+      "These recipes are based on Zambian nutritional guidelines and are intended as general",
+      "nutritional guidance only.",
       "",
       "Always consult a qualified health professional or registered dietitian for personalised",
       "medical nutrition advice, especially if you have a serious health condition.",
       "",
       "Prices and food availability may vary by region and season across Zambia.",
-    ];
-    disclaimer.forEach((line, i) => { doc.text(line, margin, 40 + i * 7); });
+    ].forEach((line,i) => { doc.text(line, margin, 40+i*7); });
 
-    // Footer
-    doc.setFillColor(15, 46, 82);
-    doc.rect(0, pageH - 20, pageW, 20, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("UMOYO360", margin, pageH - 10);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.text("Built in Zambia", pageW - margin, pageH - 10, { align: "right" });
+    doc.setFillColor(15,46,82); doc.rect(0,pageH-14,pageW,14,"F");
+    doc.setTextColor(255,255,255); doc.setFontSize(9); doc.setFont("helvetica","bold");
+    doc.text("UMOYO360 2026", margin, pageH-5);
+    doc.setFont("helvetica","normal");
+    doc.text("Built in Zambia", pageW-margin, pageH-5, {align:"right"});
 
-    const fileName = `Umoyo360_Recipes_${new Date().toISOString().slice(0,10)}.pdf`;
-    doc.save(fileName);
+    doc.save(`Umoyo360_Recipes_${new Date().toISOString().slice(0,10)}.pdf`);
   }
 </script>
 </body>

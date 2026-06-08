@@ -126,113 +126,295 @@
   initSymptomNutritionPage();
 </script>
 
-<!-- Groq AI integration — intercepts #btn-check click before existing handler -->
+<!-- Hardcoded symptom nutrition lookup -->
 <script type="module">
   import { requireAuth, loadUserProfile } from "./js/utils.js";
-  import { getConditionById } from "./js/conditions.js";
-  import { analyzeSymptoms } from "./js/groq.js";
 
-  function parseMarkdown(text) {
-    if (!text) return "";
-    let html = text
-      .replace(/^### (.+)$/gm, '<h3 class="ai-heading-3">$1</h3>')
-      .replace(/^## (.+)$/gm,  '<h2 class="ai-heading-2">$1</h2>')
-      .replace(/^# (.+)$/gm,   '<h1 class="ai-heading-1">$1</h1>')
-      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-      .replace(/\*(.+?)\*/g,     "<em>$1</em>")
-      .replace(/^[\*\-] (.+)$/gm,  '<li class="ai-list-item">$1</li>')
-      .replace(/^\d+\. (.+)$/gm,   '<li class="ai-numbered-item">$1</li>')
-      .replace(/^---+$/gm,         '<hr class="ai-divider">')
-      .replace(/\n\n/g, '</p><p class="ai-paragraph">')
-      .replace(/\n/g,   "<br>");
-    html = html.replace(
-      /(<li class="ai-list-item">[\s\S]*?<\/li>(\s*<li class="ai-list-item">[\s\S]*?<\/li>)*)/g,
-      '<ul class="ai-list">$1</ul>'
-    );
-    html = html.replace(
-      /(<li class="ai-numbered-item">[\s\S]*?<\/li>(\s*<li class="ai-numbered-item">[\s\S]*?<\/li>)*)/g,
-      '<ol class="ai-numbered-list">$1</ol>'
-    );
-    return '<p class="ai-paragraph">' + html + "</p>";
-  }
+  const SYMPTOM_ID_MAP = {
+    fatigue:         "Always tired and fatigued",
+    pale_skin:       "Pale skin and lips",
+    night_blindness: "Poor vision especially at night",
+    dry_skin:        "Skin very dry and flaky",
+    bleeding_gums:   "Gums bleeding when brushing",
+    slow_healing:    "Wounds and cuts heal slowly",
+    muscle_cramps:   "Muscle cramps especially at night",
+    swollen_legs:    "Feet and ankles swelling",
+    constipation:    "Frequent bloating and gas",
+    anxiety:         "Frequently feeling depressed or low",
+    headache:        "Difficulty concentrating",
+  };
 
-  let groqCondition = "general";
+  const SYMPTOM_MAP = {
+    "Always tired and fatigued": {
+      deficiencies: ["Iron", "Vitamin B12", "Vitamin D"],
+      foods: [
+        { name:"Beef Liver",    local:"Ini ya Ngombe", reason:"Highest iron and B12 source" },
+        { name:"Kapenta Dried", local:"Kapenta",       reason:"Rich in iron and calcium" },
+        { name:"Beans",         local:"Nyemba",        reason:"Plant iron and protein" },
+        { name:"Bondwe",        local:"Bondwe",        reason:"High iron dark green leaf" },
+        { name:"Eggs",          local:"Mayai",         reason:"Complete nutrition with B12" }
+      ],
+      improvement: "2 to 4 weeks of consistent eating",
+      tip: "Eat iron foods with orange juice to absorb more iron"
+    },
+    "Hair falling out more than usual": {
+      deficiencies: ["Biotin", "Zinc", "Protein"],
+      foods: [
+        { name:"Eggs",          local:"Mayai",         reason:"Richest biotin source" },
+        { name:"Groundnuts",    local:"Nama",          reason:"Biotin and healthy fats" },
+        { name:"Peanut Butter", local:"Chovho",        reason:"Biotin and protein" },
+        { name:"Chicken",       local:"Nkoko",         reason:"Complete protein for hair" },
+        { name:"Pumpkin Seeds", local:"Mbegu za Boga", reason:"Zinc for hair follicles" }
+      ],
+      improvement: "4 to 8 weeks",
+      tip: "Eat eggs at least 3 times per week"
+    },
+    "Skin very dry and flaky": {
+      deficiencies: ["Vitamin A", "Vitamin E"],
+      foods: [
+        { name:"Orange Sweet Potato", local:"Lumanda",    reason:"Very high Vitamin A" },
+        { name:"Carrots",             local:"Karoti",     reason:"Beta carotene for Vitamin A" },
+        { name:"Moringa Leaves",      local:"Moringa",    reason:"Extremely high Vitamin A" },
+        { name:"Avocado",             local:"Parachichi", reason:"Healthy fats for skin" },
+        { name:"Pawpaw",              local:"Papai",      reason:"Vitamin A and enzymes" }
+      ],
+      improvement: "3 to 6 weeks",
+      tip: "Eat orange and dark green foods every day"
+    },
+    "Wounds and cuts heal slowly": {
+      deficiencies: ["Vitamin C", "Zinc", "Protein"],
+      foods: [
+        { name:"Guava",        local:"Mapera",        reason:"Highest Vitamin C fruit in Zambia" },
+        { name:"Orange",       local:"Chungwa",       reason:"Classic Vitamin C source" },
+        { name:"Green Pepper", local:"Pilipili",      reason:"Very high Vitamin C" },
+        { name:"Tomatoes",     local:"Nyanya",        reason:"Vitamin C and antioxidants" },
+        { name:"Lemon Water",  local:"Maji ya Ndimu", reason:"Easy daily Vitamin C" }
+      ],
+      improvement: "2 to 3 weeks",
+      tip: "Drink fresh lemon water every morning"
+    },
+    "Gums bleeding when brushing": {
+      deficiencies: ["Vitamin C"],
+      foods: [
+        { name:"Guava",        local:"Mapera",  reason:"Highest Vitamin C of all local fruits" },
+        { name:"Orange",       local:"Chungwa", reason:"Daily Vitamin C requirement" },
+        { name:"Pawpaw",       local:"Papai",   reason:"Gentle Vitamin C source" },
+        { name:"Lemon",        local:"Ndimu",   reason:"Easy daily Vitamin C" },
+        { name:"Green Pepper", local:"Pilipili",reason:"High Vitamin C vegetable" }
+      ],
+      improvement: "1 to 2 weeks",
+      tip: "Eat one orange or guava every day without fail"
+    },
+    "Feet and ankles swelling": {
+      deficiencies: ["Potassium", "Protein"],
+      foods: [
+        { name:"Banana",       local:"Ndizi",     reason:"High potassium reduces swelling" },
+        { name:"Sweet Potato", local:"Lumanda",   reason:"Good potassium source" },
+        { name:"Beans",        local:"Nyemba",    reason:"Protein and potassium" },
+        { name:"Avocado",      local:"Parachichi",reason:"Potassium and healthy fat" },
+        { name:"Kapenta",      local:"Kapenta",   reason:"Protein reduces fluid retention" }
+      ],
+      improvement: "1 to 3 weeks",
+      tip: "Reduce salt immediately and eat banana daily"
+    },
+    "Poor vision especially at night": {
+      deficiencies: ["Vitamin A"],
+      foods: [
+        { name:"Beef Liver",          local:"Ini ya Ngombe", reason:"Highest Vitamin A food available" },
+        { name:"Orange Sweet Potato", local:"Lumanda",       reason:"Very high beta carotene" },
+        { name:"Moringa Leaves",      local:"Moringa",       reason:"Exceptionally high Vitamin A" },
+        { name:"Carrots",             local:"Karoti",        reason:"Classic Vitamin A vegetable" },
+        { name:"Pumpkin Leaves",      local:"Chibwabwa",     reason:"Dark green high Vitamin A" }
+      ],
+      improvement: "3 to 6 weeks",
+      tip: "Eat orange or yellow vegetables every single day"
+    },
+    "Pale skin and lips": {
+      deficiencies: ["Iron", "Vitamin B12", "Folate"],
+      foods: [
+        { name:"Beef Liver",    local:"Ini ya Ngombe", reason:"Iron B12 and folate in one food" },
+        { name:"Kapenta Dried", local:"Kapenta",       reason:"Rich iron source" },
+        { name:"Bondwe",        local:"Bondwe",        reason:"Iron and folate dark green" },
+        { name:"Beans",         local:"Nyemba",        reason:"Plant iron and folate" },
+        { name:"Spinach",       local:"Spinachi",      reason:"Iron and folate rich" }
+      ],
+      improvement: "4 to 8 weeks",
+      tip: "Never drink tea with iron rich meals. Wait one hour."
+    },
+    "Frequent bloating and gas": {
+      deficiencies: ["Probiotics", "Digestive Enzymes"],
+      foods: [
+        { name:"Lacto Soured Milk", local:"Amasi",     reason:"Probiotics heal gut bacteria" },
+        { name:"Plain Yoghurt",     local:"Mtindi",    reason:"Good bacteria for digestion" },
+        { name:"Pawpaw",            local:"Papai",     reason:"Natural digestive enzymes" },
+        { name:"Ginger",            local:"Tangawizi", reason:"Reduces gas and bloating" },
+        { name:"Banana",            local:"Ndizi",     reason:"Prebiotic feeds good gut bacteria" }
+      ],
+      improvement: "1 to 2 weeks",
+      tip: "Drink ginger tea after meals and eat yoghurt daily"
+    },
+    "Muscle cramps especially at night": {
+      deficiencies: ["Magnesium", "Calcium", "Potassium"],
+      foods: [
+        { name:"Kapenta Dried",  local:"Kapenta", reason:"Highest calcium fish in Zambia" },
+        { name:"Milk",           local:"Maziwa",  reason:"Calcium and magnesium combined" },
+        { name:"Moringa Leaves", local:"Moringa", reason:"More calcium than cow milk" },
+        { name:"Banana",         local:"Ndizi",   reason:"Potassium prevents cramping" },
+        { name:"Beans",          local:"Nyemba",  reason:"Magnesium and calcium source" }
+      ],
+      improvement: "1 to 3 weeks",
+      tip: "Eat kapenta or moringa every day for calcium"
+    },
+    "Difficulty concentrating": {
+      deficiencies: ["Iron", "Omega 3", "Vitamin B12"],
+      foods: [
+        { name:"Fish",       local:"Samaki",  reason:"Omega 3 feeds the brain directly" },
+        { name:"Kapenta",    local:"Kapenta", reason:"Iron and omega 3 for brain" },
+        { name:"Eggs",       local:"Mayai",   reason:"Choline and B12 for brain function" },
+        { name:"Groundnuts", local:"Nama",    reason:"Healthy fats for brain health" },
+        { name:"Banana",     local:"Ndizi",   reason:"Natural glucose for brain energy" }
+      ],
+      improvement: "2 to 4 weeks",
+      tip: "Eat fish at least 3 times per week and never skip breakfast"
+    },
+    "Mouth sores or ulcers": {
+      deficiencies: ["Vitamin B2", "Vitamin B3", "Iron"],
+      foods: [
+        { name:"Beef Liver",  local:"Ini ya Ngombe", reason:"All B vitamins in one food" },
+        { name:"Eggs",        local:"Mayai",         reason:"B2 riboflavin heals mouth tissue" },
+        { name:"Milk",        local:"Maziwa",        reason:"B2 and gentle on sores" },
+        { name:"Orange",      local:"Chungwa",       reason:"Vitamin C speeds healing" },
+        { name:"Groundnuts",  local:"Nama",          reason:"B3 niacin for mouth health" }
+      ],
+      improvement: "1 to 2 weeks",
+      tip: "Avoid very salty or spicy foods until healed"
+    },
+    "Always feeling cold": {
+      deficiencies: ["Iron", "Vitamin B12", "Thyroid nutrients"],
+      foods: [
+        { name:"Beef Liver", local:"Ini ya Ngombe",     reason:"Iron improves circulation and warmth" },
+        { name:"Kapenta",    local:"Kapenta",           reason:"Iron and iodine for thyroid" },
+        { name:"Eggs",       local:"Mayai",             reason:"B12 and complete nutrition" },
+        { name:"Ginger Tea", local:"Chai ya Tangawizi", reason:"Warms the body naturally" },
+        { name:"Fish",       local:"Samaki",            reason:"Iodine supports thyroid function" }
+      ],
+      improvement: "3 to 6 weeks",
+      tip: "Include fish or kapenta at least 4 times per week"
+    },
+    "Brittle nails breaking easily": {
+      deficiencies: ["Biotin", "Iron", "Calcium"],
+      foods: [
+        { name:"Eggs",          local:"Mayai",   reason:"Biotin strengthens nails directly" },
+        { name:"Kapenta Dried", local:"Kapenta", reason:"Calcium for nail strength" },
+        { name:"Milk",          local:"Maziwa",  reason:"Calcium builds strong nails" },
+        { name:"Groundnuts",    local:"Nama",    reason:"Biotin and healthy fats" },
+        { name:"Beans",         local:"Nyemba",  reason:"Iron and protein for nail growth" }
+      ],
+      improvement: "6 to 8 weeks",
+      tip: "Eat eggs at least 4 times per week"
+    },
+    "Frequently feeling depressed or low": {
+      deficiencies: ["Vitamin D", "Omega 3", "Magnesium"],
+      foods: [
+        { name:"Fish",       local:"Samaki",  reason:"Omega 3 directly improves mood" },
+        { name:"Kapenta",    local:"Kapenta", reason:"Vitamin D and omega 3" },
+        { name:"Eggs",       local:"Mayai",   reason:"Vitamin D and B vitamins" },
+        { name:"Banana",     local:"Ndizi",   reason:"Tryptophan converts to serotonin" },
+        { name:"Groundnuts", local:"Nama",    reason:"Magnesium and mood support" }
+      ],
+      improvement: "3 to 6 weeks",
+      tip: "Eat fish 3 times per week and get morning sunlight daily"
+    }
+  };
 
-  // Load user condition for Groq prompt
-  (async () => {
-    try {
-      const user = await requireAuth();
-      const profile = await loadUserProfile(user.uid);
-      if (profile?.condition) groqCondition = profile.condition;
-    } catch { /* silent */ }
-  })();
-
-  // Use capture phase on #symptom-container so our handler fires before
-  // the module's direct click listener on #btn-check
-  document.getElementById("symptom-container").addEventListener("click", async function(e) {
+  document.getElementById("symptom-container").addEventListener("click", function(e) {
     const btn = e.target.closest("#btn-check");
     if (!btn || btn.disabled) return;
 
-    // Stop event propagating to #btn-check's own listener
+    const selectedIds = [...document.querySelectorAll(".sn-symptom-btn.selected")].map(b => b.dataset.id);
+    if (selectedIds.length === 0) return;
+
+    const matchedKeys = selectedIds.map(id => SYMPTOM_ID_MAP[id]).filter(Boolean);
+    if (matchedKeys.length === 0) return;
+
     e.stopPropagation();
 
-    // Collect selected symptoms from DOM
-    const symptoms = [...document.querySelectorAll(".sn-symptom-btn.selected")]
-      .map(b => b.dataset.id);
-    if (symptoms.length === 0) return;
-
-    const originalHTML = btn.innerHTML;
-    btn.innerHTML = "🤖 AI is analyzing...";
-    btn.disabled = true;
-
-    try {
-      const aiText = await analyzeSymptoms(symptoms, groqCondition);
-      const container = document.getElementById("results-container");
-      if (!container) return;
-
-      container.innerHTML = `
-        <div class="sn-results-header">
-          <h2>✨ AI Nutritional Analysis</h2>
-          <p class="sn-results-sub">Groq AI analysed your ${symptoms.length} symptom${symptoms.length !== 1 ? "s" : ""} and identified nutritional deficiencies likely affecting you.</p>
-        </div>
-        <div class="sn-deficiency-card" style="border-top-color:#7C3AED;">
-          <div class="ai-response-wrapper">${parseMarkdown(aiText)}</div>
-        </div>
-        <div class="sn-tip-box">
-          <span>💡</span>
-          <span>These recommendations are based on common nutritional patterns in Zambia. Always consult a health worker for personalised medical advice.</span>
-        </div>
-        <div class="sn-action-row">
-          <a href="meal-planner.html" class="btn-green">Open Meal Planner</a>
-          <button class="btn-secondary" id="btn-reassess-ai">← Check Again</button>
-        </div>
-      `;
-      container.classList.remove("hidden");
-      container.scrollIntoView({ behavior: "smooth" });
-
-      document.getElementById("btn-reassess-ai")?.addEventListener("click", () => {
-        // Deselect all symptom buttons via programmatic click (fires existing module handler)
-        document.querySelectorAll(".sn-symptom-btn.selected").forEach(b => b.click());
-        container.classList.add("hidden");
-        container.innerHTML = "";
-        document.getElementById("symptom-container")?.scrollIntoView({ behavior: "smooth" });
-      });
-
-    } catch (err) {
-      const container = document.getElementById("results-container");
-      if (container) {
-        container.innerHTML = `
-          <div class="sn-intro-card">
-            <p style="color:var(--accent-red);font-size:0.9rem;">Something went wrong. Please try again.</p>
-          </div>
-        `;
-        container.classList.remove("hidden");
+    const defFoods = {};
+    const defInfo  = {};
+    for (const key of matchedKeys) {
+      const data = SYMPTOM_MAP[key];
+      if (!data) continue;
+      for (const def of data.deficiencies) {
+        if (!defFoods[def]) {
+          defFoods[def] = new Map();
+          defInfo[def]  = { improvement: data.improvement, tip: data.tip };
+        }
+        for (const food of data.foods) {
+          if (!defFoods[def].has(food.name)) defFoods[def].set(food.name, food);
+        }
       }
-    } finally {
-      btn.innerHTML = originalHTML;
-      btn.disabled = false;
     }
-  }, true); // true = capture phase
+
+    const container = document.getElementById("results-container");
+    if (!container) return;
+
+    const deficiencies = Object.keys(defFoods);
+    const colors = ["#C62828","#0F4DA6","#7C3AED","#E65100","#2E7D32","#AD1457","#0277BD","#00838F"];
+
+    const cardsHTML = deficiencies.map((def, i) => {
+      const foods = [...defFoods[def].values()].slice(0, 5);
+      const info  = defInfo[def];
+      const color = colors[i % colors.length];
+      return `
+        <div class="sn-deficiency-card" style="border-top-color:${color};">
+          <div class="sn-def-header">
+            <div class="sn-def-rank" style="background:${color};">${i + 1}</div>
+            <div class="sn-def-title"><h3>${def} Deficiency</h3></div>
+          </div>
+          <div class="sn-food-cols">
+            <div class="sn-food-col sn-eat" style="grid-column:1/-1;">
+              <div class="sn-food-col-head">✓ Recommended Zambian Foods</div>
+              <ul>
+                ${foods.map(f => `
+                  <li><strong>${f.name}</strong> (${f.local})
+                  <span class="sn-food-note">${f.reason}</span></li>`).join("")}
+              </ul>
+            </div>
+          </div>
+          ${info.improvement ? `<div class="sn-tip-box" style="margin-top:0.5rem;">
+            <span>⏱</span><span><strong>Expected improvement:</strong> ${info.improvement}</span>
+          </div>` : ""}
+          ${info.tip ? `<div class="sn-tip-box">
+            <span>💡</span><span>${info.tip}</span>
+          </div>` : ""}
+        </div>`;
+    }).join("");
+
+    container.innerHTML = `
+      <div class="sn-results-header">
+        <h2>Your Nutritional Analysis</h2>
+        <p class="sn-results-sub">Based on ${matchedKeys.length} symptom${matchedKeys.length !== 1 ? "s" : ""}, we found ${deficiencies.length} nutritional deficienc${deficiencies.length !== 1 ? "ies" : "y"} to address.</p>
+      </div>
+      ${cardsHTML}
+      <div class="sn-tip-box">
+        <span>⚕️</span>
+        <span>These are nutritional suggestions based on common deficiency patterns. Please consult a healthcare professional if symptoms persist or are severe.</span>
+      </div>
+      <div class="sn-action-row">
+        <a href="meal-planner.html" class="btn-green">Open Meal Planner</a>
+        <button class="btn-secondary" id="btn-reassess">← Check Again</button>
+      </div>`;
+
+    container.classList.remove("hidden");
+    container.scrollIntoView({ behavior: "smooth" });
+
+    document.getElementById("btn-reassess")?.addEventListener("click", () => {
+      document.querySelectorAll(".sn-symptom-btn.selected").forEach(b => b.click());
+      container.classList.add("hidden");
+      container.innerHTML = "";
+      document.getElementById("symptom-container")?.scrollIntoView({ behavior: "smooth" });
+    });
+  }, true);
 </script>
 </body>
 </html>

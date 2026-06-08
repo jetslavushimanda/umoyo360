@@ -163,12 +163,12 @@
   <div id="phase2-section" class="hidden">
     <div class="mb-form-card">
       <h2>Generate Your Meal Plan</h2>
-      <p style="font-size:0.88rem;color:var(--text-medium);margin-bottom:1rem;line-height:1.65;">Let AI create a meal plan using exactly what you just budgeted for.</p>
+      <p style="font-size:0.88rem;color:var(--text-medium);margin-bottom:1rem;line-height:1.65;">Generate a personalised meal plan using exactly what you just budgeted for.</p>
       <div class="mb-dur-grid">
         <button type="button" class="mb-dur-btn active" id="dur-weekly">📅 Weekly — 7 Days</button>
         <button type="button" class="mb-dur-btn" id="dur-monthly">🗓 Monthly — 30 Days</button>
       </div>
-      <button class="btn-green btn-full" id="btn-generate-meals">✨ Generate Meal Plan with AI</button>
+      <button class="btn-green btn-full" id="btn-generate-meals">Generate My Meal Plan</button>
     </div>
   </div>
 
@@ -185,10 +185,6 @@
   document.getElementById("back-btn").innerHTML = icon("arrowLeft", 22);
   document.getElementById("form-title").innerHTML = icon("budget", 18) + " Plan Your Meals";
   document.getElementById("btn-generate").innerHTML = icon("mealPlanner", 16) + " Calculate My Shopping List";
-
-  // ── Groq config ──────────────────────────────────────────────────────────
-  const GROQ_API_KEY = "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";
-  const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
   // ── App state ────────────────────────────────────────────────────────────
   let userProfile = { fullName: "User", condition: "general" };
@@ -331,6 +327,106 @@
     thyroid:"Thyroid Condition",     celiac:"Coeliac Disease",
     cholesterol:"High Cholesterol",  pregnancy:"Pregnancy",
     malnutrition:"Malnutrition"
+  };
+
+  const MEAL_TEMPLATES = {
+    general: {
+      breakfast: ["Nshima with eggs and rape","Oats porridge with banana",
+        "Sweet potato with eggs","Bread with peanut butter and banana",
+        "Vitumbuwa with lacto","Rice porridge with milk"],
+      lunch: ["Nshima with kapenta and bondwe",
+        "Nshima with beans and cabbage",
+        "Rice with chicken and vegetables",
+        "Nshima with soya pieces and rape",
+        "Sweet potato with beans and tomato sauce",
+        "Nshima with tinned fish and moringa"],
+      supper: ["Nshima with dried kapenta and tomatoes",
+        "Nshima with beans and bondwe",
+        "Sweet potato with eggs and rape",
+        "Rice with soya pieces and vegetables",
+        "Nshima with groundnut sauce and rape",
+        "Cassava with beans and moringa"]
+    },
+    diabetes_type2: {
+      breakfast: ["Oats porridge with no sugar",
+        "Boiled eggs with moringa and tomato",
+        "Sweet potato with eggs",
+        "Oats with groundnuts and no sugar",
+        "Boiled cassava with eggs and vegetables",
+        "Brown rice porridge with no sugar"],
+      lunch: ["Nshima small portion with beans and vegetables",
+        "Sweet potato with kapenta and rape",
+        "Rice small portion with chicken and vegetables",
+        "Cassava with soya pieces and bondwe",
+        "Beans and vegetable stew with small nshima",
+        "Sweet potato with tinned fish and moringa"],
+      supper: ["Sweet potato with kapenta and bondwe",
+        "Beans and moringa with small nshima",
+        "Boiled eggs with vegetables no starch",
+        "Cassava with beans and rape",
+        "Soya pieces with vegetables and small rice",
+        "Kapenta with moringa and small sweet potato"]
+    },
+    hypertension: {
+      breakfast: ["Oats with banana no salt",
+        "Eggs with moringa no salt",
+        "Sweet potato with rape no salt",
+        "Oats porridge with guava",
+        "Boiled eggs with tomatoes no salt",
+        "Sweet potato with bondwe no salt"],
+      lunch: ["Nshima with kapenta no salt and moringa",
+        "Rice with chicken no salt and vegetables",
+        "Sweet potato with beans and bondwe no salt",
+        "Nshima with tinned fish no salt and rape",
+        "Beans and vegetable stew no salt",
+        "Cassava with kapenta and moringa no salt"],
+      supper: ["Nshima with kapenta no salt and bondwe",
+        "Sweet potato with eggs and moringa",
+        "Beans with rape and banana",
+        "Rice with soya pieces no salt",
+        "Cassava with beans and vegetables no salt",
+        "Kapenta with moringa no salt"]
+    },
+    anaemia: {
+      breakfast: ["Oats with eggs and orange juice",
+        "Liver with tomatoes and rape",
+        "Kapenta with bondwe and lemon",
+        "Eggs with moringa and guava juice",
+        "Beans with bread and orange",
+        "Oats with groundnuts and lemon water"],
+      lunch: ["Nshima with liver and bondwe",
+        "Nshima with kapenta and moringa",
+        "Rice with beans and tomatoes",
+        "Nshima with soya pieces and rape",
+        "Sweet potato with kapenta and bondwe",
+        "Nshima with beans and moringa"],
+      supper: ["Nshima with kapenta and bondwe",
+        "Rice with beans and rape",
+        "Sweet potato with liver and vegetables",
+        "Nshima with soya pieces and moringa",
+        "Cassava with kapenta and bondwe",
+        "Nshima with beans and spinach"]
+    },
+    gastritis: {
+      breakfast: ["Oats porridge plain warm",
+        "Oats with banana no spice",
+        "Boiled sweet potato plain",
+        "Plain rice porridge with milk",
+        "Oats with pawpaw no acid",
+        "Plain boiled eggs with oats"],
+      lunch: ["Nshima with boiled chicken no spice",
+        "Plain rice with boiled vegetables",
+        "Sweet potato with plain chicken soup",
+        "Nshima with plain eggs and cabbage",
+        "Plain rice with kapenta and cabbage",
+        "Boiled sweet potato with plain chicken"],
+      supper: ["Plain nshima with boiled chicken",
+        "Oats porridge at night warm",
+        "Plain sweet potato with boiled eggs",
+        "Plain rice with boiled cabbage and chicken",
+        "Boiled cassava with plain kapenta",
+        "Plain nshima with plain soya pieces"]
+    }
   };
 
   // ── Markdown parser ──────────────────────────────────────────────────────
@@ -538,7 +634,7 @@
       <div class="mb-result-header" style="margin-bottom:0.875rem;">
         <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;">
           <span>✨</span>
-          <strong style="font-size:1rem;">AI Meal Plan — ${duration} Days</strong>
+          <strong style="font-size:1rem;">Your Meal Plan — ${duration} Days</strong>
         </div>
         <div style="font-size:0.8rem;opacity:0.85;">For ${familySize} people · using your exact shopping list</div>
       </div>
@@ -556,51 +652,28 @@
     container.scrollIntoView({ behavior:"smooth" });
   }
 
-  // ── Groq: generate meal plan ─────────────────────────────────────────────
-  async function generateMealPlanAI(shoppingItems, condition, duration, familySize) {
-    const fiveMealConditions = ["diabetes_type2","pregnancy","obesity","malnutrition"];
-    const needsSnacks = fiveMealConditions.includes(normalizeCondition(condition));
-    const snackLine = needsSnacks
-      ? "\nMORNING SNACK: [snack]\nAFTERNOON SNACK: [snack]"
-      : "";
-
-    const userPrompt =
-      `Create a ${duration} day meal plan for a family of ${familySize} in Zambia.\n` +
-      `The person managing diet has ${condition}.\n` +
-      `Use ONLY these ingredients that were purchased:\n` +
-      `${shoppingItems.join(", ")}\n\n` +
-      `For EACH day show:\n` +
-      `BREAKFAST: [meal]\n` +
-      `LUNCH: [meal with nshima or staple]\n` +
-      `SUPPER: [meal with nshima or staple]${snackLine}\n\n` +
-      `Keep it practical. Use real Zambian meal names.\n` +
-      `Do not suggest any foods not in the shopping list.\n` +
-      `Do not use markdown asterisks.\n` +
-      `Format each day clearly as DAY 1, DAY 2 etc.`;
-
-    const response = await fetch(GROQ_URL, {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":`Bearer ${GROQ_API_KEY}`
-      },
-      body: JSON.stringify({
-        model:"llama-3.3-70b-versatile",
-        messages:[
-          {
-            role:"system",
-            content:"You are a certified Zambian nutritionist. Create practical meal plans using only the exact ingredients provided. All meals must use Zambian cooking methods. Keep language simple and clear."
-          },
-          { role:"user", content:userPrompt }
-        ],
-        temperature:0.7,
-        max_tokens: duration >= 30 ? 4096 : 2048
-      })
-    });
-
-    if (!response.ok) throw new Error(`Groq error ${response.status}`);
-    const data = await response.json();
-    return data.choices[0].message.content;
+  // ── Hardcoded meal plan generator ───────────────────────────────────────
+  function generateHardcodedMealPlan(condition, duration) {
+    const COND_ALIAS = { anemia: "anaemia" };
+    const raw  = normalizeCondition(condition) || "general";
+    const cond = COND_ALIAS[raw] || raw;
+    const template = MEAL_TEMPLATES[cond] || MEAL_TEMPLATES.general;
+    const days = [];
+    for (let d = 1; d <= duration; d++) {
+      const bi = (d - 1) % template.breakfast.length;
+      const li = (d - 1) % template.lunch.length;
+      const si = (d - 1) % template.supper.length;
+      days.push({
+        label: `DAY ${d}`,
+        meals: {
+          BREAKFAST: template.breakfast[bi],
+          LUNCH:     template.lunch[li],
+          SUPPER:    template.supper[si]
+        },
+        mealOrder: ["BREAKFAST","LUNCH","SUPPER"]
+      });
+    }
+    return days;
   }
 
   // ── Form submit: Phase 1 ─────────────────────────────────────────────────
@@ -631,45 +704,14 @@
   });
 
   // ── Phase 2: Generate Meal Plan ──────────────────────────────────────────
-  document.getElementById("btn-generate-meals").addEventListener("click", async () => {
+  document.getElementById("btn-generate-meals").addEventListener("click", () => {
     if (!currentShoppingList) return;
-
     const familySize = parseInt(document.getElementById("family-size").value, 10);
     const condition  = document.getElementById("condition-select").value;
     const duration   = selectedDuration;
-
-    const shoppingItems = Object.values(currentShoppingList.categories)
-      .flatMap(cat => cat.items.map(item => item.name));
-
-    const btn = document.getElementById("btn-generate-meals");
-    const origHTML = btn.innerHTML;
-    btn.innerHTML = "🤖 AI is creating your meal plan...";
-    btn.disabled = true;
-
-    const mealContainer = document.getElementById("meal-plan-result");
-    mealContainer.innerHTML = `
-      <div style="background:var(--bg-white);border-radius:var(--radius);padding:2rem;text-align:center;border:1px solid var(--border);box-shadow:var(--shadow-card);margin-bottom:1rem;">
-        <div style="font-size:1.5rem;margin-bottom:0.75rem;">🤖</div>
-        <p style="font-size:0.9rem;font-weight:600;color:var(--text-dark);margin-bottom:0.25rem;">AI is creating your ${duration}-day meal plan…</p>
-        <p style="font-size:0.82rem;color:var(--text-medium);">Using your exact shopping list items.</p>
-      </div>`;
-    mealContainer.classList.remove("hidden");
-    mealContainer.scrollIntoView({ behavior:"smooth" });
-
-    try {
-      const aiText = await generateMealPlanAI(shoppingItems, condition, duration, familySize);
-      currentFallbackText = aiText;
-      currentDays = parseMealPlan(aiText);
-      displayMealPlan(currentDays, duration, familySize, aiText);
-    } catch (err) {
-      mealContainer.innerHTML = `
-        <div style="background:rgba(220,38,38,0.06);border:1.5px solid rgba(220,38,38,0.25);border-radius:var(--radius);padding:1.25rem;text-align:center;">
-          <p style="color:var(--accent-red);font-size:0.9rem;">Something went wrong generating the meal plan. Please check your connection and try again.</p>
-        </div>`;
-    } finally {
-      btn.innerHTML = origHTML;
-      btn.disabled = false;
-    }
+    currentDays = generateHardcodedMealPlan(condition, duration);
+    currentFallbackText = "";
+    displayMealPlan(currentDays, duration, familySize, "");
   });
 
   // ────────────────────────────────────────────────────────────────────────
