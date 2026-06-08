@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -54,6 +54,7 @@
     @media (min-width:600px) { .cg-form-grid { grid-template-columns:repeat(3,1fr); } .cg-form-grid .form-group:first-child { grid-column:1/-1; } }
     @media (min-width:768px) { .cg-body { padding:2rem; } }
   </style>
+  <link rel="manifest" href="manifest.json">
 </head>
 <body class="cg-page">
 
@@ -111,5 +112,6 @@
   document.getElementById("history-title").classList.remove("hidden");
   initChildGrowthPage();
 </script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');</script>
 </body>
 </html>

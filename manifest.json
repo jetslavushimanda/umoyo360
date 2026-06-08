@@ -1,0 +1,22 @@
+{
+  "name": "Umoyo360",
+  "short_name": "Umoyo360",
+  "description": "Your personal health and nutrition companion — built in Zambia",
+  "start_url": "/dashboard.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F4DA6",
+  "theme_color": "#0F4DA6",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "medical", "food"],
+  "lang": "en",
+  "dir": "ltr"
+}

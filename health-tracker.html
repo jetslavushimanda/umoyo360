@@ -54,6 +54,7 @@
     }
     @media (min-width:768px) { .tracker-body { padding:2rem; } }
   </style>
+  <link rel="manifest" href="manifest.json">
 </head>
 <body class="tracker-page">
 
@@ -136,5 +137,6 @@
 
   initHealthTrackerPage();
 </script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');</script>
 </body>
 </html>

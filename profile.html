@@ -29,6 +29,7 @@
     .edit-section.active { display: block; }
     .edit-actions { display: flex; gap: 0.75rem; margin-top: 1rem; }
   </style>
+  <link rel="manifest" href="manifest.json">
 </head>
 <body class="profile-page">
 
@@ -126,5 +127,6 @@
   import { initProfilePage } from "./js/profile.js";
   initProfilePage();
 </script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');</script>
 </body>
 </html>
