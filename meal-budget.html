@@ -581,7 +581,7 @@
     container.scrollIntoView({ behavior:"smooth" });
   }
 
-  // ── Parse Groq meal plan response into day cards ─────────────────────────
+  // ── Parse meal plan text into day cards (kept for PDF fallback) ──────────
   function parseMealPlan(text) {
     const days = [];
     const blocks = text.split(/(?=\bDAY\s+\d+\b)/i);
